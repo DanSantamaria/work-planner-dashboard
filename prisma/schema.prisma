@@ -20,12 +20,14 @@ enum LOB {
   ESPAÑA
   FRANCIA
   IRLANDA
+  COORDINACION
 }
 
 enum Turno {
   MANANA
   MEDIO
   CIERRE
+  NOCTURNO
 }
 
 enum TipoAusencia {
@@ -55,7 +57,7 @@ model User {
 
 model Empleado {
   id            String   @id @default(cuid())
-  nombre        String
+  nombre        String   @unique 
   lob           LOB
   turno         Turno
   activo        Boolean  @default(true)
@@ -79,7 +81,7 @@ model Empleado {
 
 model Tarea {
   id          String  @id @default(cuid())
-  nombre      String
+  nombre      String  @unique
   descripcion String?
   activa      Boolean @default(true)
 
