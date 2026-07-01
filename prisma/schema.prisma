@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────
+// ENUMS - These are fixed lists of options
+// ─────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  SUPERVISOR
+}
+
+enum LOB {
+  ESPAÑA
+  FRANCIA
+  IRLANDA
+}
+
+enum Turno {
+  MANANA
+  MEDIO
+  CIERRE
+}
+
+enum TipoAusencia {
+  VACACIONES
+  BAJA_MEDICA
+  MEDICO
+  LLEGADA_TARDE
+  SALIDA_TEMPRANA
+  OTRO
+}
+
+// ─────────────────────────────────────────
+// MODELS - These become your database tables
+// ─────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  nombre    String
+  email     String   @unique
+  password  String
+  role      Role
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Empleado {
+  id            String   @id @default(cuid())
+  nombre        String
+  lob           LOB
+  turno         Turno
+  activo        Boolean  @default(true)
+  
+  // Holiday balance
+  diasVacaciones        Int   @default(22)
+  diasVacacionesUsados  Int   @default(0)
+  
+  // Medical hours balance  
+  horasMedicasTotal     Float @default(16)
+  horasMedicasUsadas    Float @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  asignaciones  AsignacionSemanal[]
+  ausencias     Ausencia[]
+
+  @@map("empleados")
+}
+
+model Tarea {
+  id          String  @id @default(cuid())
+  nombre      String
+  descripcion String?
+  activa      Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  asignaciones AsignacionSemanal[]
+
+  @@map("tareas")
+}
+
+model SemanaPlan {
+  id          String   @id @default(cuid())
+  fechaInicio DateTime // Always Monday
+  fechaFin    DateTime // Always Sunday
+  publicada   Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  asignaciones AsignacionSemanal[]
+
+  @@map("semanas_plan")
+}
+
+model AsignacionSemanal {
+  id          String   @id @default(cuid())
+  diaSemana   Int      // 1=Monday, 2=Tuesday ... 5=Friday
+  oficina     Boolean  @default(false)
+  notas       String?
+
+  semana    SemanaPlan @relation(fields: [semanaId], references: [id])
+  semanaId  String
+
+  empleado    Empleado @relation(fields: [empleadoId], references: [id])
+  empleadoId  String
+
+  tarea     Tarea    @relation(fields: [tareaId], references: [id])
+  tareaId   String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("asignaciones_semanales")
+}
+
+model Ausencia {
+  id          String       @id @default(cuid())
+  fecha       DateTime
+  tipo        TipoAusencia
+  horas       Float?       // Only for MEDICO type
+  notas       String?      // Internal only, never shown to employees
+  
+  empleado    Empleado @relation(fields: [empleadoId], references: [id])
+  empleadoId  String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("ausencias")
+}
