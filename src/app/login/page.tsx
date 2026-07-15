@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -33,7 +34,9 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md">
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">Iniciar Sesión</h1>
+        <h1 className="text-2xl font-bold text-gray-800 mb-2">
+          Iniciar Sesión
+        </h1>
         <p className="text-blue-500 mb-6">Panel de administración CAC</p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -66,11 +69,15 @@ export default function LoginPage() {
           <button
             className="bg-blue-500 rounded-lg text-white py-2 font-medium hover:bg-blue-600 disabled:opacity-50 cursor-pointer"
             type="submit"
-            disabled={loading}
-          >
+            disabled={loading}>
             {loading ? "Entrando..." : "Entrar"}
           </button>
         </form>
+        <Link
+          href="/semana"
+          className="text-sm text-blue-500 hover:text-blue-600 flex items-center gap-1 mb-4 mt-8">
+          ← Volver al inicio
+        </Link>
       </div>
     </main>
   );
