@@ -1,7 +1,8 @@
-import { CalendarSync, CalendarDays, Users } from "lucide-react";
+import { CalendarSync, CalendarDays, Users, UserCog } from "lucide-react";
 import Link from "next/link";
+import type { Role } from "@/generated/prisma/client";
 
-export default function Sidebar() {
+export default function Sidebar({ role }: { role?: Role }) {
   return (
     <aside className="w-64 bg-blue-600 shadow-md flex flex-col">
       {/* Logo / App name */}
@@ -16,17 +17,35 @@ export default function Sidebar() {
       {/* Navigation links */}
       <nav className="flex-1 p-4 flex flex-col gap-2">
         <Link
-          href="/dashboard/semana"
+          href="/semana"
           className="flex items-center gap-3 px-4 py-2 rounded-lg text-white hover:bg-blue-50 hover:text-blue-600">
           <CalendarDays size={18} />
           Planificación Semanal
         </Link>
         <Link
-          href="/dashboard/calendario"
+          href="/calendario"
           className="flex items-center gap-3 px-4 py-2 rounded-lg text-white hover:bg-blue-50 hover:text-blue-600">
           <CalendarSync size={18} />
           Calendario
         </Link>
+
+        {(role === "ADMIN" || role === "SUPERVISOR") && (
+          <Link
+            href="/empleados"
+            className="flex items-center gap-3 px-4 py-2 rounded-lg text-white hover:bg-blue-50 hover:text-blue-600">
+            <Users size={18} />
+            Empleados
+          </Link>
+        )}
+
+        {role === "ADMIN" && (
+          <Link
+            href="/usuarios"
+            className="flex items-center gap-3 px-4 py-2 rounded-lg text-white hover:bg-blue-50 hover:text-blue-600">
+            <UserCog size={18} />
+            Usuarios
+          </Link>
+        )}
       </nav>
     </aside>
   );
