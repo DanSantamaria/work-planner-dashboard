@@ -1,4 +1,5 @@
 import SemanaGrid from "@/components/semana/SemanaGrid";
+import FiltroNombre from "@/components/semana/FiltroNombre";
 
 const mockEmpleados = [
   { id: "1", nombre: "Paloma Sánchez", lob: "COORDINACION", horario: "08:00 - 15:00" },
@@ -21,8 +22,10 @@ const mockTareas = {
 export default function SemanaPage() {
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">Planificación Semanal</h1>
-      <SemanaGrid empleados={mockEmpleados} tareas={mockTareas} />
+      <h1 className="text-2xl font-bold text-gray-800 mb-6">
+        Planificación Semanal
+      </h1>
+      <FiltroNombre empleados={mockEmpleados} tareas={mockTareas} />
     </div>
   );
 }
