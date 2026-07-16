@@ -41,7 +41,7 @@ export default {
         return true;
       }
 
-      if (pathname.startsWith("/empleados")) {
+      if (pathname.startsWith("/empleados") || pathname.startsWith("/tareas")) {
         if (!isLoggedIn) return false;
         return true;
       }

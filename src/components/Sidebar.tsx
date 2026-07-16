@@ -1,4 +1,10 @@
-import { CalendarSync, CalendarDays, Users, UserCog } from "lucide-react";
+import {
+  CalendarSync,
+  CalendarDays,
+  Users,
+  UserCog,
+  ListChecks,
+} from "lucide-react";
 import Link from "next/link";
 import type { Role } from "@/generated/prisma/client";
 
@@ -35,6 +41,15 @@ export default function Sidebar({ role }: { role?: Role }) {
             className="flex items-center gap-3 px-4 py-2 rounded-lg text-white hover:bg-blue-50 hover:text-blue-600">
             <Users size={18} />
             Empleados
+          </Link>
+        )}
+
+        {(role === "ADMIN" || role === "SUPERVISOR") && (
+          <Link
+            href="/tareas"
+            className="flex items-center gap-3 px-4 py-2 rounded-lg text-white hover:bg-blue-50 hover:text-blue-600">
+            <ListChecks size={18} />
+            Tareas
           </Link>
         )}
 

@@ -36,7 +36,7 @@ export default function SemanaGrid({ empleados, tareas }: Props) {
     if (lob === "ESPAÑA") return "bg-red-100 text-gray-500";
     if (lob === "FRANCIA") return "bg-blue-100 text-gray-500";
     if (lob === "IRLANDA") return "bg-green-100 text-gray-500";
-    return "bg-gray-100 text-gray-500";
+    return "bg-gray-200 text-gray-500";
   }
 
   return (
@@ -65,7 +65,7 @@ export default function SemanaGrid({ empleados, tareas }: Props) {
 
             return (
               <tr key={empleado.id} className={rowBg}>
-                <td className={`font-semibold ${getLobColor(empleado.lob)}`}>
+                <td className={`font-semibold px-2 border border-white ${getLobColor(empleado.lob)}`}>
                   {empleado.nombre}
                 </td>
                 <td
