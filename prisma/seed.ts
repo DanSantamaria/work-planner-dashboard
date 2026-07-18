@@ -2,6 +2,19 @@ import { LOB, Turno, Role } from "../src/generated/prisma/client";
 import { prisma } from "../src/lib/prisma";
 import * as bcrypt from "bcryptjs";
 
+function horarioPorTurno(turno: Turno): string {
+  switch (turno) {
+    case Turno.MANANA:
+      return "07:00 - 15:00";
+    case Turno.MEDIO:
+      return "09:00 - 18:00 (1h almuerzo)";
+    case Turno.CIERRE:
+      return "15:00 - 23:00";
+    case Turno.NOCTURNO:
+      return "00:00 - 06:00";
+  }
+}
+
 async function main() {
   console.log("🌱 Seeding database...");
 
@@ -114,10 +127,12 @@ async function main() {
   ];
 
   for (const emp of empleados) {
+    const horario = horarioPorTurno(emp.turno);
+
     await prisma.empleado.upsert({
       where: { nombre: emp.nombre },
-      update: {},
-      create: emp,
+      update: { lob: emp.lob, turno: emp.turno, horario },
+      create: { ...emp, horario },
     });
   }
 

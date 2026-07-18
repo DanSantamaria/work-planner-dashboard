@@ -60,6 +60,7 @@ model Empleado {
   nombre        String   @unique 
   lob           LOB
   turno         Turno
+  horario       String   @default("")
   activo        Boolean  @default(true)
   
   // Holiday balance
