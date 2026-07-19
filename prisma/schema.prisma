@@ -96,7 +96,7 @@ model Tarea {
 
 model SemanaPlan {
   id          String   @id @default(cuid())
-  fechaInicio DateTime // Always Monday
+  fechaInicio DateTime @unique // Always Monday
   fechaFin    DateTime // Always Sunday
   publicada   Boolean  @default(false)
 
@@ -114,7 +114,7 @@ model AsignacionSemanal {
   oficina     Boolean  @default(false)
   notas       String?
 
-  semana    SemanaPlan @relation(fields: [semanaId], references: [id])
+  semana    SemanaPlan @relation(fields: [semanaId], references: [id], onDelete: Cascade)
   semanaId  String
 
   empleado    Empleado @relation(fields: [empleadoId], references: [id])

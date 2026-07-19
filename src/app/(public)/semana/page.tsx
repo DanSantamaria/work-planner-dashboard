@@ -1,31 +1,73 @@
-import SemanaGrid from "@/components/semana/SemanaGrid";
-import FiltroNombre from "@/components/semana/FiltroNombre";
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
+import SemanaView from "@/components/semana/SemanaView";
 
-const mockEmpleados = [
-  { id: "1", nombre: "Paloma Sánchez", lob: "COORDINACION", horario: "08:00 - 15:00" },
-  { id: "2", nombre: "Alicia Casas Muñoz", lob: "COORDINACION", horario: "08:00 - 14:00" },
-  { id: "3", nombre: "Mimuna Harchaoui", lob: "COORDINACION", horario: "09:00 - 15:00" },
-  { id: "4", nombre: "Daniel Santamaria", lob: "COORDINACION", horario: "07:00 - 15:00" },
-  { id: "5", nombre: "Sonia Tor Oliu", lob: "FRANCIA", horario: "06:00 - 14:00" },
-  { id: "6", nombre: "Yolanda Toro Gomez", lob: "ESPAÑA", horario: "07:00 - 15:00" },
-  { id: "7", nombre: "Nuria Canalda", lob: "IRLANDA", horario: "07:00 - 15:00" },
-];
+export default async function SemanaPage() {
+  const session = await auth();
+  const role = session?.user?.role;
+  const canEdit = role === "ADMIN" || role === "SUPERVISOR";
+  const isAdmin = role === "ADMIN";
 
-const mockTareas = {
-  "1": { 1: ["REVISION INFORME ATRAPAMIENTO", "OFICINA"], 2: ["REVISION INFORME ATRAPAMIENTO"], 3: [], 4: ["INFORME 17:15"], 5: ["INFORME 17:15"] },
-  "2": { 1: ["TESTA", "REVISIÓN BUZÓN FR"], 2: ["TESTA", "OFICINA"], 3: ["TESTA"], 4: [], 5: [] },
-  "5": { 1: ["DISPONIBLE"], 2: ["DISPONIBLE"], 3: [], 4: ["REASIGNAR MAÑANAS"], 5: ["DISPONIBLE"] },
-  "6": { 1: ["OFICINA", "RECEPCION"], 2: ["FESTIVOS"], 3: [], 4: ["OFICINA"], 5: [] },
-  "7": { 1: [], 2: ["DISPONIBLE"], 3: ["DISPONIBLE"], 4: [], 5: ["DISPONIBLE"] },
-};
+  const [semanas, empleados, tareas] = await Promise.all([
+    prisma.semanaPlan.findMany({
+      where: canEdit ? {} : { publicada: true },
+      orderBy: { fechaInicio: "asc" },
+      include: {
+        asignaciones: {
+          include: {
+            tarea: { select: { id: true, nombre: true } },
+          },
+        },
+      },
+    }),
+    prisma.empleado.findMany({
+      where: { activo: true },
+      orderBy: { nombre: "asc" },
+    }),
+    prisma.tarea.findMany({
+      where: { activa: true },
+      orderBy: { nombre: "asc" },
+      select: { id: true, nombre: true },
+    }),
+  ]);
 
-export default function SemanaPage() {
+  const hoy = new Date();
+
+  const semanaInicial =
+    semanas.length === 0
+      ? null
+      : (semanas.find((s) => s.fechaInicio <= hoy && hoy <= s.fechaFin) ??
+        semanas.reduce((masCercana, actual) => {
+          const diffActual = Math.abs(
+            actual.fechaInicio.getTime() - hoy.getTime()
+          );
+          const diffMasCercana = Math.abs(
+            masCercana.fechaInicio.getTime() - hoy.getTime()
+          );
+          return diffActual < diffMasCercana ? actual : masCercana;
+        }));
+
+  const semanasSerializadas = semanas.map((s) => ({
+    id: s.id,
+    fechaInicio: s.fechaInicio.toISOString(),
+    fechaFin: s.fechaFin.toISOString(),
+    publicada: s.publicada,
+    asignaciones: s.asignaciones,
+  }));
+
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-800 mb-6">
         Planificación Semanal
       </h1>
-      <FiltroNombre empleados={mockEmpleados} tareas={mockTareas} />
+      <SemanaView
+        semanasIniciales={semanasSerializadas}
+        semanaInicialId={semanaInicial?.id ?? null}
+        empleadosIniciales={empleados}
+        tareasDisponibles={tareas}
+        canEdit={canEdit}
+        isAdmin={isAdmin}
+      />
     </div>
   );
 }

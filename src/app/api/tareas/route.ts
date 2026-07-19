@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isPrismaError } from "@/lib/prisma-errors";
+import { requireRole } from "@/lib/api-auth";
 
 export async function GET() {
+  const { response } = await requireRole(["ADMIN", "SUPERVISOR"]);
+  if (response) return response;
+
   try {
     const tareas = await prisma.tarea.findMany({
       orderBy: { nombre: "asc" },
@@ -19,6 +23,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const { response } = await requireRole(["ADMIN", "SUPERVISOR"]);
+  if (response) return response;
+
   try {
     const body = await request.json();
     const { nombre, descripcion } = body;

@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { isPrismaError } from "@/lib/prisma-errors";
 import { Role } from "@/generated/prisma/client";
+import { requireRole } from "@/lib/api-auth";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -19,6 +19,9 @@ type RouteContext = {
 };
 
 export async function PUT(request: Request, { params }: RouteContext) {
+  const { response } = await requireRole(["ADMIN"]);
+  if (response) return response;
+
   try {
     const { id } = await params;
     const body = await request.json();
@@ -97,9 +100,11 @@ export async function PUT(request: Request, { params }: RouteContext) {
 }
 
 export async function DELETE(_request: Request, { params }: RouteContext) {
+  const { session, response } = await requireRole(["ADMIN"]);
+  if (response) return response;
+
   try {
     const { id } = await params;
-    const session = await auth();
 
     if (session?.user?.id === id) {
       return NextResponse.json(

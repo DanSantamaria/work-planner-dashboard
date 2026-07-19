@@ -1,12 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isPrismaError } from "@/lib/prisma-errors";
+import { requireRole } from "@/lib/api-auth";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
 };
 
 export async function PUT(request: Request, { params }: RouteContext) {
+  const { response } = await requireRole(["ADMIN", "SUPERVISOR"]);
+  if (response) return response;
+
   try {
     const { id } = await params;
     const body = await request.json();
@@ -58,6 +62,9 @@ export async function PUT(request: Request, { params }: RouteContext) {
 }
 
 export async function DELETE(_request: Request, { params }: RouteContext) {
+  const { response } = await requireRole(["ADMIN", "SUPERVISOR"]);
+  if (response) return response;
+
   try {
     const { id } = await params;
 
