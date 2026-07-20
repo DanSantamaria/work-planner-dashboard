@@ -4,7 +4,7 @@ import { useState } from "react";
 import { addDays } from "@/lib/date-utils";
 import TareaDropdown from "@/components/semana/TareaDropdown";
 
-const DAY_NAMES = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
+const DAY_NAMES = ["LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES"];
 
 function getWeekDays(fechaInicio: string) {
   const monday = new Date(fechaInicio);
@@ -19,6 +19,19 @@ function getWeekDays(fechaInicio: string) {
 
     return { diaSemana, dayName, dateLabel: `${dd}.${mm}.${yyyy}` };
   });
+}
+
+function getCeldaHighlight(asignaciones: AsignacionCelda[]): string {
+  const nombres = asignaciones.map((a) => a.nombre);
+  if (nombres.includes("AUSENTE")) return "bg-red-100";
+  if (nombres.includes("OFICINA")) return "bg-amber-100";
+  return "";
+}
+
+function getPillClasses(nombre: string): string {
+  const base = "bg-gray-50 border text-gray-700 rounded-xl text-xs my-0.4 px-2 py-1";
+  const esCambioDeTurno = nombre.toUpperCase().includes("CAMBIO TURNO");
+  return esCambioDeTurno ? `${base} font-bold ` : base;
 }
 
 function CeldaEditable({
@@ -113,20 +126,20 @@ export default function SemanaGrid({
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr className="bg-blue-600 text-white">
-            <th className="sticky left-0 z-20 w-48 border border-blue-500 bg-blue-600 px-4 py-3 text-left">
-              Nombre
+            <th className="sticky left-0 z-20 w-48 border border-white border-1 bg-blue-600 px-4 py-3 text-left">
+              NOMBRE
             </th>
-            <th className="sticky left-48 z-20 w-32 border border-blue-500 bg-blue-600 px-4 py-3 text-left">
-              Horario
+            <th className="sticky left-48 z-20 w-32 border border-white border-1 bg-blue-600 px-4 py-3 text-left">
+              HORARIO
             </th>
             {weekDays.map((day) => (
               <th
                 key={day.diaSemana}
-                className="whitespace-nowrap border border-blue-500 px-4 py-3 text-left">
+                className="whitespace-nowrap border border-white border-1 px-4 py-3 text-left">
                 <div className="flex flex-col items-start gap-1">
                   <span>{day.dayName}</span>
                   <div className="h-px w-full bg-white/40" />
-                  <span className="text-xs font-normal">{day.dateLabel}</span>
+                  <span className="text-s font-normal">{day.dateLabel}</span>
                 </div>
               </th>
             ))}
@@ -134,11 +147,11 @@ export default function SemanaGrid({
         </thead>
         <tbody>
           {empleados.map((empleado, index) => {
-            const rowBg = index % 2 === 0 ? "bg-white" : "bg-gray-50";
+            const rowBg = index % 2 === 0 ? "bg-white" : "bg-gray-100";
 
             return (
               <tr key={empleado.id} className={rowBg}>
-                <td className={`font-semibold px-2 border border-white ${getLobColor(empleado.lob)}`}>
+                <td className={`font-semibold px-2 border border-white border-b-2 ${getLobColor(empleado.lob)}`}>
                   {editable ? (
                     <CeldaEditable
                       valor={empleado.nombre}
@@ -149,7 +162,7 @@ export default function SemanaGrid({
                   )}
                 </td>
                 <td
-                  className={`sticky left-48 z-10 w-32 border border-gray-200 px-4 py-2 text-gray-600 ${rowBg}`}>
+                  className={`sticky left-48 z-10 w-32 border border-white border-b-2 px-4 py-2 text-gray-600 ${rowBg}`}>
                   {editable ? (
                     <CeldaEditable
                       valor={empleado.horario}
@@ -165,7 +178,7 @@ export default function SemanaGrid({
                   return (
                     <td
                       key={day.diaSemana}
-                      className="border border-gray-200 px-4 py-2 align-top text-gray-700">
+                      className={`border border-white border-b-2 border-l-2 px-4 py-2 align-top text-gray-700 ${getCeldaHighlight(asignacionesCelda)}`}>
                       {editable ? (
                         <TareaDropdown
                           tareasDisponibles={tareasDisponibles}
@@ -179,7 +192,7 @@ export default function SemanaGrid({
                           {asignacionesCelda.map((asignacion) => (
                             <span
                               key={asignacion.tareaId}
-                              className="bg-gray-200 text-gray-700 rounded-md text-xs px-2 py-1">
+                              className={getPillClasses(asignacion.nombre)}>
                               {asignacion.nombre}
                             </span>
                           ))}
