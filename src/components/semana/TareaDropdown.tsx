@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
+import { useClickOutside } from "@/hooks/useClickOutside";
 
 type Tarea = { id: string; nombre: string };
 
@@ -11,9 +12,16 @@ type Props = {
 };
 
 function getPillClasses(nombre: string): string {
-  const base = "inline-block bg-gray-200 text-gray-700 rounded-md text-xs px-2 py-1";
-  const esCambioDeTurno = nombre.toUpperCase().includes("CAMBIO DE TURNO");
-  return esCambioDeTurno ? `${base} font-bold ring-1 ring-gray-400` : base;
+  const esCambioDeTurno = nombre.toUpperCase().includes("CAMBIO TURNO");
+  const acento = esCambioDeTurno ? " font-bold ring-1 ring-gray-400" : "";
+
+  if (nombre === "OFICINA") {
+    return `inline-block bg-[#C7FDFB] text-[#5E8A88] border border-[#5E8A88] rounded-md text-xs px-2 py-1${acento}`;
+  }
+  if (nombre === "AUSENTE") {
+    return `inline-block bg-[#FFE0E0] text-[#E81414] font-bold border border-[#E81414] rounded-md text-xs px-2 py-1${acento}`;
+  }
+  return `inline-block bg-gray-200 text-gray-700 rounded-md text-xs px-2 py-1${acento}`;
 }
 
 export default function TareaDropdown({
@@ -25,19 +33,7 @@ export default function TareaDropdown({
   const contenedorRef = useRef<HTMLDivElement>(null);
   const previaARef = useRef<string[]>([]);
 
-  useEffect(() => {
-    function handleClickFuera(e: MouseEvent) {
-      if (
-        contenedorRef.current &&
-        !contenedorRef.current.contains(e.target as Node)
-      ) {
-        setAbierto(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickFuera);
-    return () => document.removeEventListener("mousedown", handleClickFuera);
-  }, []);
+  useClickOutside(contenedorRef, () => setAbierto(false));
 
   const ausenteId = tareasDisponibles.find((t) => t.nombre === "AUSENTE")?.id;
   const ausenteSeleccionada = ausenteId ? seleccionadas.includes(ausenteId) : false;

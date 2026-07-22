@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import FiltroNombre from "@/components/semana/FiltroNombre";
+import { Pencil, X } from "lucide-react";
+import SemanaGrid from "@/components/semana/SemanaGrid";
 import SemanaEditBar from "@/components/semana/SemanaEditBar";
 import NuevaSemanaModal from "@/components/semana/NuevaSemanaModal";
 import { addDays } from "@/lib/date-utils";
+import { useBusqueda } from "@/context/BusquedaContext";
 import {
   agruparAsignaciones,
   type AsignacionCelda,
@@ -88,6 +90,7 @@ export default function SemanaView({
   canEdit,
   isAdmin,
 }: Props) {
+  const { busqueda } = useBusqueda();
   const [semanas, setSemanas] = useState<Semana[]>(semanasIniciales);
   const [empleados, setEmpleados] = useState<Empleado[]>(empleadosIniciales);
   const [selectedWeekId, setSelectedWeekId] = useState<string | null>(
@@ -376,7 +379,7 @@ export default function SemanaView({
         {canEdit && (
           <button
             onClick={() => setShowModal(true)}
-            className="bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-lg cursor-pointer"
+            className="bg-[#211E2F] hover:opacity-90 text-white text-sm font-medium px-4 py-2 rounded-lg cursor-pointer"
           >
             + Nueva Semana
           </button>
@@ -396,7 +399,9 @@ export default function SemanaView({
     ? draftAsignaciones
     : agruparAsignaciones(semanaActual.asignaciones);
 
-  const empleadosOrdenados = ordenarEmpleados(empleados);
+  const empleadosOrdenados = ordenarEmpleados(empleados).filter((empleado) =>
+    empleado.nombre.toLowerCase().includes(busqueda.toLowerCase())
+  );
 
   return (
     <div>
@@ -411,17 +416,17 @@ export default function SemanaView({
           <button
             onClick={irAnterior}
             disabled={currentIndex <= 0}
-            className="cursor-pointer text-lg text-gray-500 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-30"
+            className="cursor-pointer text-lg text-[#E9865C] hover:opacity-75 disabled:cursor-not-allowed disabled:opacity-30"
           >
             ◄
           </button>
-          <span className="font-medium text-gray-800">
+          <span className="text-lg font-bold text-[#E9865C]">
             Semana {formatearRangoSemana(semanaActual.fechaInicio)}
           </span>
           <button
             onClick={irSiguiente}
             disabled={currentIndex < 0 || currentIndex >= semanas.length - 1}
-            className="cursor-pointer text-lg text-gray-500 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-30"
+            className="cursor-pointer text-lg text-[#E9865C] hover:opacity-75 disabled:cursor-not-allowed disabled:opacity-30"
           >
             ►
           </button>
@@ -430,27 +435,28 @@ export default function SemanaView({
         {canEdit && (
           <button
             onClick={() => setShowModal(true)}
-            className="cursor-pointer rounded-lg bg-blue-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-600"
+            className="cursor-pointer rounded-lg bg-[#211E2F] px-3 py-1.5 text-sm font-medium text-white hover:opacity-90"
           >
             + Nueva Semana
           </button>
         )}
 
-        <span className="text-sm text-gray-600">
-          Estado: {semanaActual.publicada ? "🟢 Publicada" : "🟡 Borrador"}
+        <span className="ml-auto text-sm text-gray-600">
+          Estado: {semanaActual.publicada ? "Publicada 🟢" : "Borrador 🟡"}
         </span>
 
         {canEdit && (
           <button
             onClick={handleEditarSemana}
-            className="ml-auto cursor-pointer rounded-lg bg-gray-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-gray-800"
+            title={editMode ? "Cancelar Edición" : "Editar Semana"}
+            className="cursor-pointer rounded-lg bg-[#211E2F] p-2 text-white hover:opacity-90"
           >
-            {editMode ? "Cancelar Edición" : "Editar Semana"}
+            {editMode ? <X size={18} /> : <Pencil size={18} />}
           </button>
         )}
       </div>
 
-      <FiltroNombre
+      <SemanaGrid
         fechaInicio={semanaActual.fechaInicio}
         empleados={empleadosOrdenados}
         tareas={tareasParaGrid}

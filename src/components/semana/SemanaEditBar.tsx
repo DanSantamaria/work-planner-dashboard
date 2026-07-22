@@ -25,7 +25,7 @@ export default function SemanaEditBar({
         <button
           onClick={onGuardar}
           disabled={saving}
-          className="bg-gray-600 hover:bg-gray-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg cursor-pointer"
+          className="bg-[#211E2F] hover:opacity-90 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg cursor-pointer"
         >
           {saving ? "Guardando..." : "Guardar Borrador"}
         </button>
@@ -45,7 +45,7 @@ export default function SemanaEditBar({
         <button
           onClick={onGuardar}
           disabled={saving}
-          className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg cursor-pointer"
+          className="bg-[#211E2F] hover:opacity-90 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg cursor-pointer"
         >
           {saving ? "Guardando..." : "Guardar"}
         </button>
@@ -55,7 +55,7 @@ export default function SemanaEditBar({
         <button
           onClick={onDespublicar}
           disabled={saving}
-          className="bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg cursor-pointer"
+          className="bg-[#E9865C] hover:opacity-90 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg cursor-pointer"
         >
           Despublicar
         </button>
@@ -65,7 +65,7 @@ export default function SemanaEditBar({
         <button
           onClick={onEliminar}
           disabled={saving}
-          className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg cursor-pointer"
+          className="bg-[#E81414] hover:opacity-90 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg cursor-pointer"
         >
           Eliminar Semana
         </button>

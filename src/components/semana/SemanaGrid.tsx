@@ -4,7 +4,7 @@ import { useState } from "react";
 import { addDays } from "@/lib/date-utils";
 import TareaDropdown from "@/components/semana/TareaDropdown";
 
-const DAY_NAMES = ["LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES"];
+const DAY_NAMES = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
 
 function getWeekDays(fechaInicio: string) {
   const monday = new Date(fechaInicio);
@@ -13,25 +13,39 @@ function getWeekDays(fechaInicio: string) {
     const date = addDays(monday, i);
     const diaSemana = i + 1;
 
-    const dd = String(date.getDate()).padStart(2, "0");
-    const mm = String(date.getMonth() + 1).padStart(2, "0");
-    const yyyy = date.getFullYear();
-
-    return { diaSemana, dayName, dateLabel: `${dd}.${mm}.${yyyy}` };
+    return { diaSemana, dayName, date, dayNumber: date.getDate() };
   });
 }
 
-function getCeldaHighlight(asignaciones: AsignacionCelda[]): string {
-  const nombres = asignaciones.map((a) => a.nombre);
-  if (nombres.includes("AUSENTE")) return "bg-red-100";
-  if (nombres.includes("OFICINA")) return "bg-amber-100";
-  return "";
+function esHoy(date: Date): boolean {
+  return date.toDateString() === new Date().toDateString();
 }
 
 function getPillClasses(nombre: string): string {
-  const base = "bg-gray-50 border text-gray-700 rounded-xl text-xs my-0.4 px-2 py-1";
   const esCambioDeTurno = nombre.toUpperCase().includes("CAMBIO TURNO");
-  return esCambioDeTurno ? `${base} font-bold ` : base;
+  const acento = esCambioDeTurno ? " font-bold" : "";
+
+  if (nombre === "OFICINA") {
+    return `bg-[#C7FDFB] text-[#5E8A88] border border-[#5E8A88] rounded-md text-xs px-2 py-1${acento}`;
+  }
+  if (nombre === "AUSENTE") {
+    return `bg-[#FFE0E0] text-[#E81414] font-bold border border-[#E81414] rounded-md text-xs px-2 py-1${acento}`;
+  }
+  return `bg-gray-50 border text-gray-700 rounded-xl text-xs my-0.4 px-2 py-1${acento}`;
+}
+
+function getCeldaAccentColor(asignaciones: AsignacionCelda[]): string | null {
+  const nombres = asignaciones.map((a) => a.nombre);
+  if (nombres.includes("AUSENTE")) return "#FFE0E0";
+  if (nombres.includes("OFICINA")) return "#C7FDFB";
+  return null;
+}
+
+function getLobColorHex(lob: string): string {
+  if (lob === "ESPAÑA") return "#FFE0E0";
+  if (lob === "FRANCIA") return "#D4E9FF";
+  if (lob === "IRLANDA") return "#F3FFED";
+  return "#F2F3FF"; // COORDINACION / Supervisor
 }
 
 function CeldaEditable({
@@ -114,44 +128,46 @@ export default function SemanaGrid({
 }: Props) {
   const weekDays = getWeekDays(fechaInicio);
 
-  function getLobColor(lob: string) {
-    if (lob === "ESPAÑA") return "bg-red-100 text-gray-500";
-    if (lob === "FRANCIA") return "bg-blue-100 text-gray-500";
-    if (lob === "IRLANDA") return "bg-green-100 text-gray-500";
-    return "bg-gray-200 text-gray-500";
-  }
-
   return (
-    <div className="overflow-x-auto border border-gray-200 rounded-lg">
+    <div className="overflow-x-auto overflow-y-hidden rounded-2xl">
       <table className="w-full border-collapse text-sm">
         <thead>
-          <tr className="bg-blue-600 text-white">
-            <th className="sticky left-0 z-20 w-48 border border-white border-1 bg-blue-600 px-4 py-3 text-left">
-              NOMBRE
+          <tr>
+            <th className="sticky left-0 z-20 w-48 border border-gray-300 bg-[#E6E6E6] px-4 py-3 text-left text-lg text-gray-800">
+              Nombre
             </th>
-            <th className="sticky left-48 z-20 w-32 border border-white border-1 bg-blue-600 px-4 py-3 text-left">
-              HORARIO
+            <th className="sticky left-48 z-20 w-32 border border-gray-300 bg-[#E6E6E6] px-4 py-3 text-left text-lg text-gray-800">
+              Horario
             </th>
-            {weekDays.map((day) => (
-              <th
-                key={day.diaSemana}
-                className="whitespace-nowrap border border-white border-1 px-4 py-3 text-left">
-                <div className="flex flex-col items-start gap-1">
-                  <span>{day.dayName}</span>
-                  <div className="h-px w-full bg-white/40" />
-                  <span className="text-s font-normal">{day.dateLabel}</span>
-                </div>
-              </th>
-            ))}
+            {weekDays.map((day) => {
+              const hoy = esHoy(day.date);
+
+              return (
+                <th
+                  key={day.diaSemana}
+                  className={`whitespace-nowrap border border-gray-300 bg-[#E6E6E6] px-4 py-3 text-center text-gray-800 ${
+                    hoy ? "border-t-4 border-t-[#211E2F]" : ""
+                  }`}
+                >
+                  <div className="flex flex-col items-center">
+                    <span className="text-3xl font-bold">{day.dayNumber}</span>
+                    <span className="text-xs font-normal text-gray-600">
+                      {day.dayName}
+                    </span>
+                  </div>
+                </th>
+              );
+            })}
           </tr>
         </thead>
         <tbody>
-          {empleados.map((empleado, index) => {
-            const rowBg = index % 2 === 0 ? "bg-white" : "bg-gray-100";
-
+          {empleados.map((empleado) => {
             return (
-              <tr key={empleado.id} className={rowBg}>
-                <td className={`font-semibold px-2 border border-white border-b-2 ${getLobColor(empleado.lob)}`}>
+              <tr key={empleado.id} className="bg-white">
+                <td
+                  style={{ backgroundColor: getLobColorHex(empleado.lob) }}
+                  className="border border-gray-300 px-2 font-semibold text-gray-700"
+                >
                   {editable ? (
                     <CeldaEditable
                       valor={empleado.nombre}
@@ -161,8 +177,7 @@ export default function SemanaGrid({
                     empleado.nombre
                   )}
                 </td>
-                <td
-                  className={`sticky left-48 z-10 w-32 border border-white border-b-2 px-4 py-2 text-gray-600 ${rowBg}`}>
+                <td className="sticky left-48 z-10 w-32 border border-gray-300 bg-white px-4 py-2 text-gray-600">
                   {editable ? (
                     <CeldaEditable
                       valor={empleado.horario}
@@ -174,11 +189,17 @@ export default function SemanaGrid({
                 </td>
                 {weekDays.map((day) => {
                   const asignacionesCelda = tareas[empleado.id]?.[day.diaSemana] ?? [];
+                  const colorAcento = getCeldaAccentColor(asignacionesCelda);
 
                   return (
                     <td
                       key={day.diaSemana}
-                      className={`border border-white border-b-2 border-l-2 px-4 py-2 align-top text-gray-700 ${getCeldaHighlight(asignacionesCelda)}`}>
+                      style={
+                        colorAcento
+                          ? { borderLeftWidth: "8px", borderLeftColor: colorAcento }
+                          : undefined
+                      }
+                      className="border border-gray-300 px-4 py-2 align-top text-gray-700">
                       {editable ? (
                         <TareaDropdown
                           tareasDisponibles={tareasDisponibles}
