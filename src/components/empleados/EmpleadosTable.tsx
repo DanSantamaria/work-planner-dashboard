@@ -3,9 +3,18 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { LOB, Turno } from "@/generated/prisma/browser";
+import { Pencil, Trash2 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Badge from "@/components/ui/Badge";
+import {
+  Table,
+  TableHead,
+  TableHeaderCell,
+  TableBody,
+  TableRow,
+  TableCell,
+} from "@/components/ui/Table";
 
 const LOB_OPTIONS = Object.values(LOB);
 const TURNO_OPTIONS = Object.values(Turno);
@@ -226,144 +235,134 @@ export default function EmpleadosTable({ initialEmpleados }: Props) {
         </form>
       )}
 
-      <div className="overflow-x-auto border border-gray-200 rounded-lg">
-        <table className="w-full border-collapse text-sm">
-          <thead>
-            <tr className="bg-blue-600 text-white">
-              <th className="border border-blue-500 px-4 py-3 text-left">
-                Nombre
-              </th>
-              <th className="border border-blue-500 px-4 py-3 text-left">
-                LOB
-              </th>
-              <th className="border border-blue-500 px-4 py-3 text-left">
-                Horario
-              </th>
-              <th className="border border-blue-500 px-4 py-3 text-left">
-                Estado
-              </th>
-              <th className="border border-blue-500 px-4 py-3 text-left">
-                Acciones
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {empleados.map((empleado, index) => {
-              const rowBg = index % 2 === 0 ? "bg-white" : "bg-gray-50";
-              const isEditing = editingId === empleado.id;
+      <Table>
+        <TableHead>
+          <TableHeaderCell>Nombre</TableHeaderCell>
+          <TableHeaderCell>LOB</TableHeaderCell>
+          <TableHeaderCell>Horario</TableHeaderCell>
+          <TableHeaderCell>Estado</TableHeaderCell>
+          <TableHeaderCell>Acciones</TableHeaderCell>
+        </TableHead>
+        <TableBody>
+          {empleados.map((empleado, index) => {
+            const isEditing = editingId === empleado.id;
 
-              return (
-                <tr
-                  key={empleado.id}
-                  className={`${rowBg} ${!empleado.activo ? "opacity-50" : ""}`}
-                >
-                  <td className="border border-gray-200 px-4 py-2">
-                    {isEditing ? (
-                      <Input
-                        value={editNombre}
-                        onChange={(e) => setEditNombre(e.target.value)}
-                        compact
-                      />
-                    ) : (
-                      <span className="text-gray-800 font-medium">
-                        {empleado.nombre}
-                      </span>
-                    )}
-                  </td>
-                  <td className="border border-gray-200 px-4 py-2">
-                    {isEditing ? (
-                      <select
-                        className="w-full border border-gray-300 rounded px-2 py-1 text-gray-700 focus:outline-none focus:ring-2 focus:ring-sidebar"
-                        value={editLob}
-                        onChange={(e) => setEditLob(e.target.value as LOB)}
+            return (
+              <TableRow
+                key={empleado.id}
+                index={index}
+                className={!empleado.activo ? "opacity-50" : ""}
+              >
+                <TableCell>
+                  {isEditing ? (
+                    <Input
+                      value={editNombre}
+                      onChange={(e) => setEditNombre(e.target.value)}
+                      compact
+                    />
+                  ) : (
+                    <span className="text-gray-800 font-medium">
+                      {empleado.nombre}
+                    </span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {isEditing ? (
+                    <select
+                      className="w-full border border-gray-300 rounded px-2 py-1 text-gray-700 focus:outline-none focus:ring-2 focus:ring-sidebar"
+                      value={editLob}
+                      onChange={(e) => setEditLob(e.target.value as LOB)}
+                    >
+                      {LOB_OPTIONS.map((lob) => (
+                        <option key={lob} value={lob}>
+                          {lob}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <span className="text-gray-600">{empleado.lob}</span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {isEditing ? (
+                    <Input
+                      value={editHorario}
+                      onChange={(e) => setEditHorario(e.target.value)}
+                      compact
+                    />
+                  ) : (
+                    <span className="text-gray-600">
+                      {empleado.horario || "—"}
+                    </span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <Badge variant={empleado.activo ? "success" : "default"}>
+                    {empleado.activo ? "Activo" : "Inactivo"}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  {isEditing ? (
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleSaveEdit(empleado.id)}
+                        loading={submitting}
+                        className="text-green-600 hover:text-green-700"
                       >
-                        {LOB_OPTIONS.map((lob) => (
-                          <option key={lob} value={lob}>
-                            {lob}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <span className="text-gray-600">{empleado.lob}</span>
-                    )}
-                  </td>
-                  <td className="border border-gray-200 px-4 py-2">
-                    {isEditing ? (
-                      <Input
-                        value={editHorario}
-                        onChange={(e) => setEditHorario(e.target.value)}
-                        compact
-                      />
-                    ) : (
-                      <span className="text-gray-600">
-                        {empleado.horario || "—"}
-                      </span>
-                    )}
-                  </td>
-                  <td className="border border-gray-200 px-4 py-2">
-                    <Badge variant={empleado.activo ? "success" : "default"}>
-                      {empleado.activo ? "Activo" : "Inactivo"}
-                    </Badge>
-                  </td>
-                  <td className="border border-gray-200 px-4 py-2">
-                    {isEditing ? (
-                      <div className="flex gap-2">
+                        Guardar
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={cancelEditing}
+                        className="text-gray-500 hover:text-gray-700"
+                      >
+                        Cancelar
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-3">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => startEditing(empleado)}
+                        className="text-blue-600 hover:text-blue-700"
+                        title="Editar"
+                        aria-label="Editar"
+                      >
+                        <Pencil size={16} />
+                      </Button>
+                      {empleado.activo ? (
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleSaveEdit(empleado.id)}
-                          loading={submitting}
-                          className="text-green-600 hover:text-green-700"
+                          onClick={() => handleDelete(empleado)}
+                          className="text-red-500 hover:text-red-600"
+                          title="Eliminar"
+                          aria-label="Eliminar"
                         >
-                          Guardar
+                          <Trash2 size={16} />
                         </Button>
+                      ) : (
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={cancelEditing}
+                          onClick={() => handleReactivar(empleado)}
                           className="text-gray-500 hover:text-gray-700"
                         >
-                          Cancelar
+                          Reactivar
                         </Button>
-                      </div>
-                    ) : (
-                      <div className="flex gap-3">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => startEditing(empleado)}
-                          className="text-blue-600 hover:text-blue-700"
-                        >
-                          Editar
-                        </Button>
-                        {empleado.activo ? (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(empleado)}
-                            className="text-red-500 hover:text-red-600"
-                          >
-                            Eliminar
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleReactivar(empleado)}
-                            className="text-gray-500 hover:text-gray-700"
-                          >
-                            Reactivar
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                      )}
+                    </div>
+                  )}
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
     </div>
   );
 }
