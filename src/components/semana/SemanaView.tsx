@@ -62,6 +62,21 @@ function obtenerMinutosInicio(horario: string): number {
   return totalMinutos === 0 ? 24 * 60 : totalMinutos;
 }
 
+function tareasDelEmpleadoIncluyenTexto(
+  tareasEmpleado: Record<number, AsignacionCelda[]> | undefined,
+  texto: string
+): boolean {
+  if (!tareasEmpleado) return false;
+
+  // tareasEmpleado está indexado por día (1-5); Object.values recorre las
+  // asignaciones de los 5 días sin importar cuáles existan.
+  return Object.values(tareasEmpleado).some((asignacionesDelDia) =>
+    asignacionesDelDia.some((asignacion) =>
+      asignacion.nombre.toLowerCase().includes(texto)
+    )
+  );
+}
+
 function ordenarEmpleados(empleados: Empleado[]) {
   return [...empleados].sort((a, b) => {
     const aEsPaloma = a.nombre === "Paloma Sánchez";
@@ -399,9 +414,18 @@ export default function SemanaView({
     ? draftAsignaciones
     : agruparAsignaciones(semanaActual.asignaciones);
 
-  const empleadosOrdenados = ordenarEmpleados(empleados).filter((empleado) =>
-    empleado.nombre.toLowerCase().includes(busqueda.toLowerCase())
-  );
+  const textoBusqueda = busqueda.toLowerCase();
+  const empleadosOrdenados = ordenarEmpleados(empleados).filter((empleado) => {
+    const coincideNombre = empleado.nombre
+      .toLowerCase()
+      .includes(textoBusqueda);
+    const coincideTarea = tareasDelEmpleadoIncluyenTexto(
+      tareasParaGrid[empleado.id],
+      textoBusqueda
+    );
+
+    return coincideNombre || coincideTarea;
+  });
 
   return (
     <div>

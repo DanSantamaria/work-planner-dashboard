@@ -15,7 +15,7 @@ type HeaderUser = {
 };
 
 const SEARCH_PLACEHOLDERS: Record<string, string> = {
-  "/semana": "Buscar empleado...",
+  "/semana": "Buscar empleado o tarea...",
   "/empleados": "Buscar empleado...",
   "/tareas": "Buscar tarea...",
   "/usuarios": "Buscar usuario...",
