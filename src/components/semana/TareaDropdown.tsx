@@ -1,14 +1,17 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, type RefObject } from "react";
 import { useClickOutside } from "@/hooks/useClickOutside";
 
 type Tarea = { id: string; nombre: string };
+
+const ALTURA_ESTIMADA_PANEL = 256; // max-h-64
 
 type Props = {
   tareasDisponibles: Tarea[];
   seleccionadas: string[];
   onChange: (nuevasSeleccionadas: string[]) => void;
+  contenedorTablaRef?: RefObject<HTMLDivElement | null>;
 };
 
 function getPillClasses(nombre: string): string {
@@ -28,12 +31,28 @@ export default function TareaDropdown({
   tareasDisponibles,
   seleccionadas,
   onChange,
+  contenedorTablaRef,
 }: Props) {
   const [abierto, setAbierto] = useState(false);
+  const [abrirHaciaArriba, setAbrirHaciaArriba] = useState(false);
   const contenedorRef = useRef<HTMLDivElement>(null);
   const previaARef = useRef<string[]>([]);
 
   useClickOutside(contenedorRef, () => setAbierto(false));
+
+  function alternarAbierto() {
+    if (!abierto) {
+      const botonRect = contenedorRef.current?.getBoundingClientRect();
+      const limiteAbajo =
+        contenedorTablaRef?.current?.getBoundingClientRect().bottom ??
+        window.innerHeight;
+      const espacioAbajo = botonRect ? limiteAbajo - botonRect.bottom : 0;
+
+      setAbrirHaciaArriba(espacioAbajo < ALTURA_ESTIMADA_PANEL);
+    }
+
+    setAbierto((prev) => !prev);
+  }
 
   const ausenteId = tareasDisponibles.find((t) => t.nombre === "AUSENTE")?.id;
   const ausenteSeleccionada = ausenteId ? seleccionadas.includes(ausenteId) : false;
@@ -77,7 +96,7 @@ export default function TareaDropdown({
     <div ref={contenedorRef} className="relative min-h-[2rem]">
       <button
         type="button"
-        onClick={() => setAbierto((prev) => !prev)}
+        onClick={alternarAbierto}
         className="w-full text-left cursor-pointer"
       >
         {tareasSeleccionadas.length === 0 ? (
@@ -94,7 +113,11 @@ export default function TareaDropdown({
       </button>
 
       {abierto && (
-        <div className="absolute z-30 mt-1 w-64 max-h-64 overflow-y-auto rounded-lg border border-gray-300 bg-white p-2 shadow-lg">
+        <div
+          className={`absolute z-30 w-64 max-h-64 overflow-y-auto rounded-lg border border-gray-300 bg-white p-2 shadow-lg ${
+            abrirHaciaArriba ? "bottom-full mb-1" : "top-full mt-1"
+          }`}
+        >
           {tareasDisponibles.map((tarea) => {
             const esAusente = tarea.id === ausenteId;
             const deshabilitada = ausenteSeleccionada && !esAusente;

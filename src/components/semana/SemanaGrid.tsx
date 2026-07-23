@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { addDays } from "@/lib/date-utils";
 import TareaDropdown from "@/components/semana/TareaDropdown";
 import Badge from "@/components/ui/Badge";
@@ -125,9 +125,10 @@ export default function SemanaGrid({
   onTareasChange,
 }: Props) {
   const weekDays = getWeekDays(fechaInicio);
+  const contenedorTablaRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div className="overflow-x-auto overflow-y-hidden rounded-2xl">
+    <div ref={contenedorTablaRef} className="overflow-x-auto overflow-y-hidden rounded-2xl">
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr>
@@ -199,6 +200,7 @@ export default function SemanaGrid({
                           onChange={(nuevasIds) =>
                             onTareasChange?.(empleado.id, day.diaSemana, nuevasIds)
                           }
+                          contenedorTablaRef={contenedorTablaRef}
                         />
                       ) : (
                         <div className="flex max-w-[220px] flex-wrap gap-1">
