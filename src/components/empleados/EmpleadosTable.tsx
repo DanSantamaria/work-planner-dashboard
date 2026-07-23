@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { LOB, Turno } from "@/generated/prisma/browser";
 import { Pencil, Trash2 } from "lucide-react";
+import { useBusqueda } from "@/context/BusquedaContext";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Badge from "@/components/ui/Badge";
@@ -37,6 +38,7 @@ function sortByNombre(empleados: Empleado[]) {
 }
 
 export default function EmpleadosTable({ initialEmpleados }: Props) {
+  const { busqueda } = useBusqueda();
   const [empleados, setEmpleados] = useState<Empleado[]>(
     sortByNombre(initialEmpleados)
   );
@@ -244,123 +246,127 @@ export default function EmpleadosTable({ initialEmpleados }: Props) {
           <TableHeaderCell>Acciones</TableHeaderCell>
         </TableHead>
         <TableBody>
-          {empleados.map((empleado, index) => {
-            const isEditing = editingId === empleado.id;
+          {empleados
+            .filter((empleado) =>
+              empleado.nombre.toLowerCase().includes(busqueda.toLowerCase())
+            )
+            .map((empleado, index) => {
+              const isEditing = editingId === empleado.id;
 
-            return (
-              <TableRow
-                key={empleado.id}
-                index={index}
-                className={!empleado.activo ? "opacity-50" : ""}
-              >
-                <TableCell>
-                  {isEditing ? (
-                    <Input
-                      value={editNombre}
-                      onChange={(e) => setEditNombre(e.target.value)}
-                      compact
-                    />
-                  ) : (
-                    <span className="text-gray-800 font-medium">
-                      {empleado.nombre}
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {isEditing ? (
-                    <select
-                      className="w-full border border-gray-300 rounded px-2 py-1 text-gray-700 focus:outline-none focus:ring-2 focus:ring-sidebar"
-                      value={editLob}
-                      onChange={(e) => setEditLob(e.target.value as LOB)}
-                    >
-                      {LOB_OPTIONS.map((lob) => (
-                        <option key={lob} value={lob}>
-                          {lob}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <span className="text-gray-600">{empleado.lob}</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {isEditing ? (
-                    <Input
-                      value={editHorario}
-                      onChange={(e) => setEditHorario(e.target.value)}
-                      compact
-                    />
-                  ) : (
-                    <span className="text-gray-600">
-                      {empleado.horario || "—"}
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Badge variant={empleado.activo ? "success" : "default"}>
-                    {empleado.activo ? "Activo" : "Inactivo"}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  {isEditing ? (
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleSaveEdit(empleado.id)}
-                        loading={submitting}
-                        className="text-green-600 hover:text-green-700"
+              return (
+                <TableRow
+                  key={empleado.id}
+                  index={index}
+                  className={!empleado.activo ? "opacity-50" : ""}
+                >
+                  <TableCell>
+                    {isEditing ? (
+                      <Input
+                        value={editNombre}
+                        onChange={(e) => setEditNombre(e.target.value)}
+                        compact
+                      />
+                    ) : (
+                      <span className="text-gray-800 font-medium">
+                        {empleado.nombre}
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {isEditing ? (
+                      <select
+                        className="w-full border border-gray-300 rounded px-2 py-1 text-gray-700 focus:outline-none focus:ring-2 focus:ring-sidebar"
+                        value={editLob}
+                        onChange={(e) => setEditLob(e.target.value as LOB)}
                       >
-                        Guardar
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={cancelEditing}
-                        className="text-gray-500 hover:text-gray-700"
-                      >
-                        Cancelar
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="flex gap-3">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => startEditing(empleado)}
-                        className="text-blue-600 hover:text-blue-700"
-                        title="Editar"
-                        aria-label="Editar"
-                      >
-                        <Pencil size={16} />
-                      </Button>
-                      {empleado.activo ? (
+                        {LOB_OPTIONS.map((lob) => (
+                          <option key={lob} value={lob}>
+                            {lob}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span className="text-gray-600">{empleado.lob}</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {isEditing ? (
+                      <Input
+                        value={editHorario}
+                        onChange={(e) => setEditHorario(e.target.value)}
+                        compact
+                      />
+                    ) : (
+                      <span className="text-gray-600">
+                        {empleado.horario || "—"}
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={empleado.activo ? "success" : "default"}>
+                      {empleado.activo ? "Activo" : "Inactivo"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {isEditing ? (
+                      <div className="flex gap-2">
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDelete(empleado)}
-                          className="text-red-500 hover:text-red-600"
-                          title="Eliminar"
-                          aria-label="Eliminar"
+                          onClick={() => handleSaveEdit(empleado.id)}
+                          loading={submitting}
+                          className="text-green-600 hover:text-green-700"
                         >
-                          <Trash2 size={16} />
+                          Guardar
                         </Button>
-                      ) : (
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleReactivar(empleado)}
+                          onClick={cancelEditing}
                           className="text-gray-500 hover:text-gray-700"
                         >
-                          Reactivar
+                          Cancelar
                         </Button>
-                      )}
-                    </div>
-                  )}
-                </TableCell>
-              </TableRow>
-            );
-          })}
+                      </div>
+                    ) : (
+                      <div className="flex gap-3">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => startEditing(empleado)}
+                          className="text-blue-600 hover:text-blue-700"
+                          title="Editar"
+                          aria-label="Editar"
+                        >
+                          <Pencil size={16} />
+                        </Button>
+                        {empleado.activo ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(empleado)}
+                            className="text-red-500 hover:text-red-600"
+                            title="Eliminar"
+                            aria-label="Eliminar"
+                          >
+                            <Trash2 size={16} />
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleReactivar(empleado)}
+                            className="text-gray-500 hover:text-gray-700"
+                          >
+                            Reactivar
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
         </TableBody>
       </Table>
     </div>

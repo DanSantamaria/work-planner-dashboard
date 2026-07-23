@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Pencil, Trash2 } from "lucide-react";
+import { useBusqueda } from "@/context/BusquedaContext";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Badge from "@/components/ui/Badge";
@@ -31,6 +32,7 @@ function sortByNombre(tareas: Tarea[]) {
 }
 
 export default function TareasTable({ initialTareas }: Props) {
+  const { busqueda } = useBusqueda();
   const [tareas, setTareas] = useState<Tarea[]>(sortByNombre(initialTareas));
   const [error, setError] = useState<string | null>(null);
 
@@ -196,102 +198,106 @@ export default function TareasTable({ initialTareas }: Props) {
           <TableHeaderCell>Acciones</TableHeaderCell>
         </TableHead>
         <TableBody>
-          {tareas.map((tarea, index) => {
-            const isEditing = editingId === tarea.id;
+          {tareas
+            .filter((tarea) =>
+              tarea.nombre.toLowerCase().includes(busqueda.toLowerCase())
+            )
+            .map((tarea, index) => {
+              const isEditing = editingId === tarea.id;
 
-            return (
-              <TableRow key={tarea.id} index={index}>
-                <TableCell>
-                  {isEditing ? (
-                    <Input
-                      value={editNombre}
-                      onChange={(e) => setEditNombre(e.target.value)}
-                      compact
-                    />
-                  ) : (
-                    <span className="text-gray-800 font-medium">
-                      {tarea.nombre}
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {isEditing ? (
-                    <Input
-                      value={editDescripcion}
-                      onChange={(e) => setEditDescripcion(e.target.value)}
-                      compact
-                    />
-                  ) : (
-                    <span className="text-gray-600">
-                      {tarea.descripcion || "—"}
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Badge variant={tarea.activa ? "success" : "default"}>
-                    {tarea.activa ? "Activa" : "Inactiva"}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  {isEditing ? (
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleSaveEdit(tarea.id)}
-                        loading={submitting}
-                        className="text-green-600 hover:text-green-700"
-                      >
-                        Guardar
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={cancelEditing}
-                        className="text-gray-500 hover:text-gray-700"
-                      >
-                        Cancelar
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="flex gap-3">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => startEditing(tarea)}
-                        className="text-blue-600 hover:text-blue-700"
-                        title="Editar"
-                        aria-label="Editar"
-                      >
-                        <Pencil size={16} />
-                      </Button>
-                      {tarea.activa ? (
+              return (
+                <TableRow key={tarea.id} index={index}>
+                  <TableCell>
+                    {isEditing ? (
+                      <Input
+                        value={editNombre}
+                        onChange={(e) => setEditNombre(e.target.value)}
+                        compact
+                      />
+                    ) : (
+                      <span className="text-gray-800 font-medium">
+                        {tarea.nombre}
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {isEditing ? (
+                      <Input
+                        value={editDescripcion}
+                        onChange={(e) => setEditDescripcion(e.target.value)}
+                        compact
+                      />
+                    ) : (
+                      <span className="text-gray-600">
+                        {tarea.descripcion || "—"}
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={tarea.activa ? "success" : "default"}>
+                      {tarea.activa ? "Activa" : "Inactiva"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {isEditing ? (
+                      <div className="flex gap-2">
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDelete(tarea)}
-                          className="text-red-500 hover:text-red-600"
-                          title="Eliminar"
-                          aria-label="Eliminar"
+                          onClick={() => handleSaveEdit(tarea.id)}
+                          loading={submitting}
+                          className="text-green-600 hover:text-green-700"
                         >
-                          <Trash2 size={16} />
+                          Guardar
                         </Button>
-                      ) : (
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleReactivar(tarea)}
+                          onClick={cancelEditing}
                           className="text-gray-500 hover:text-gray-700"
                         >
-                          Reactivar
+                          Cancelar
                         </Button>
-                      )}
-                    </div>
-                  )}
-                </TableCell>
-              </TableRow>
-            );
-          })}
+                      </div>
+                    ) : (
+                      <div className="flex gap-3">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => startEditing(tarea)}
+                          className="text-blue-600 hover:text-blue-700"
+                          title="Editar"
+                          aria-label="Editar"
+                        >
+                          <Pencil size={16} />
+                        </Button>
+                        {tarea.activa ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(tarea)}
+                            className="text-red-500 hover:text-red-600"
+                            title="Eliminar"
+                            aria-label="Eliminar"
+                          >
+                            <Trash2 size={16} />
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleReactivar(tarea)}
+                            className="text-gray-500 hover:text-gray-700"
+                          >
+                            Reactivar
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
         </TableBody>
       </Table>
     </div>

@@ -4,6 +4,7 @@ import { Fragment, useState } from "react";
 import type { FormEvent } from "react";
 import { Role } from "@/generated/prisma/browser";
 import { Pencil, Trash2 } from "lucide-react";
+import { useBusqueda } from "@/context/BusquedaContext";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import {
@@ -34,6 +35,7 @@ function sortByNombre(usuarios: Usuario[]) {
 }
 
 export default function UsuariosTable({ initialUsuarios, currentUserId }: Props) {
+  const { busqueda } = useBusqueda();
   const [usuarios, setUsuarios] = useState<Usuario[]>(
     sortByNombre(initialUsuarios)
   );
@@ -253,157 +255,165 @@ export default function UsuariosTable({ initialUsuarios, currentUserId }: Props)
           <TableHeaderCell>Acciones</TableHeaderCell>
         </TableHead>
         <TableBody>
-          {usuarios.map((usuario, index) => {
-            const isEditing = editingId === usuario.id;
-            const isResetting = resettingId === usuario.id;
-            const isSelf = usuario.id === currentUserId;
+          {usuarios
+            .filter((usuario) => {
+              const texto = busqueda.toLowerCase();
+              return (
+                usuario.nombre.toLowerCase().includes(texto) ||
+                usuario.email.toLowerCase().includes(texto)
+              );
+            })
+            .map((usuario, index) => {
+              const isEditing = editingId === usuario.id;
+              const isResetting = resettingId === usuario.id;
+              const isSelf = usuario.id === currentUserId;
 
-            return (
-              <Fragment key={usuario.id}>
-                <TableRow index={index}>
-                  <TableCell>
-                    {isEditing ? (
-                      <Input
-                        value={editNombre}
-                        onChange={(e) => setEditNombre(e.target.value)}
-                        compact
-                      />
-                    ) : (
-                      <span className="text-gray-800 font-medium">
-                        {usuario.nombre}
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {isEditing ? (
-                      <Input
-                        type="email"
-                        value={editEmail}
-                        onChange={(e) => setEditEmail(e.target.value)}
-                        compact
-                      />
-                    ) : (
-                      <span className="text-gray-600">{usuario.email}</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {isEditing ? (
-                      <select
-                        className="w-full border border-gray-300 rounded px-2 py-1 text-gray-700 focus:outline-none focus:ring-2 focus:ring-sidebar"
-                        value={editRole}
-                        onChange={(e) =>
-                          setEditRole(e.target.value as Role)
-                        }
-                      >
-                        {ROLE_OPTIONS.map((role) => (
-                          <option key={role} value={role}>
-                            {role}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <span className="text-gray-600">{usuario.role}</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {isEditing ? (
-                      <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleSaveEdit(usuario.id)}
-                          loading={submitting}
-                          className="text-green-600 hover:text-green-700"
-                        >
-                          Guardar
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={cancelEditing}
-                          className="text-gray-500 hover:text-gray-700"
-                        >
-                          Cancelar
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex gap-3">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => startEditing(usuario)}
-                          className="text-blue-600 hover:text-blue-700"
-                          title="Editar"
-                          aria-label="Editar"
-                        >
-                          <Pencil size={16} />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => startResetPassword(usuario)}
-                          className="text-amber-600 hover:text-amber-700"
-                        >
-                          Restablecer contraseña
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(usuario)}
-                          disabled={isSelf}
-                          title={
-                            isSelf
-                              ? "No puedes eliminar tu propio usuario"
-                              : "Eliminar"
-                          }
-                          aria-label="Eliminar"
-                          className="text-red-500 hover:text-red-600"
-                        >
-                          <Trash2 size={16} />
-                        </Button>
-                      </div>
-                    )}
-                  </TableCell>
-                </TableRow>
-
-                {isResetting && (
+              return (
+                <Fragment key={usuario.id}>
                   <TableRow index={index}>
-                    <TableCell colSpan={4} className="py-3">
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs text-gray-500">
-                          Nueva contraseña para {usuario.nombre}:
-                        </span>
+                    <TableCell>
+                      {isEditing ? (
                         <Input
-                          type="password"
-                          value={resetPassword}
-                          onChange={(e) => setResetPassword(e.target.value)}
-                          placeholder="Mínimo 6 caracteres"
+                          value={editNombre}
+                          onChange={(e) => setEditNombre(e.target.value)}
                           compact
                         />
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleSaveResetPassword(usuario.id)}
-                          loading={submitting}
-                          className="text-green-600 hover:text-green-700"
+                      ) : (
+                        <span className="text-gray-800 font-medium">
+                          {usuario.nombre}
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {isEditing ? (
+                        <Input
+                          type="email"
+                          value={editEmail}
+                          onChange={(e) => setEditEmail(e.target.value)}
+                          compact
+                        />
+                      ) : (
+                        <span className="text-gray-600">{usuario.email}</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {isEditing ? (
+                        <select
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-gray-700 focus:outline-none focus:ring-2 focus:ring-sidebar"
+                          value={editRole}
+                          onChange={(e) =>
+                            setEditRole(e.target.value as Role)
+                          }
                         >
-                          Guardar
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={cancelResetPassword}
-                          className="text-gray-500 hover:text-gray-700"
-                        >
-                          Cancelar
-                        </Button>
-                      </div>
+                          {ROLE_OPTIONS.map((role) => (
+                            <option key={role} value={role}>
+                              {role}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span className="text-gray-600">{usuario.role}</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {isEditing ? (
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleSaveEdit(usuario.id)}
+                            loading={submitting}
+                            className="text-green-600 hover:text-green-700"
+                          >
+                            Guardar
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={cancelEditing}
+                            className="text-gray-500 hover:text-gray-700"
+                          >
+                            Cancelar
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex gap-3">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => startEditing(usuario)}
+                            className="text-blue-600 hover:text-blue-700"
+                            title="Editar"
+                            aria-label="Editar"
+                          >
+                            <Pencil size={16} />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => startResetPassword(usuario)}
+                            className="text-amber-600 hover:text-amber-700"
+                          >
+                            Restablecer contraseña
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(usuario)}
+                            disabled={isSelf}
+                            title={
+                              isSelf
+                                ? "No puedes eliminar tu propio usuario"
+                                : "Eliminar"
+                            }
+                            aria-label="Eliminar"
+                            className="text-red-500 hover:text-red-600"
+                          >
+                            <Trash2 size={16} />
+                          </Button>
+                        </div>
+                      )}
                     </TableCell>
                   </TableRow>
-                )}
-              </Fragment>
-            );
-          })}
+
+                  {isResetting && (
+                    <TableRow index={index}>
+                      <TableCell colSpan={4} className="py-3">
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs text-gray-500">
+                            Nueva contraseña para {usuario.nombre}:
+                          </span>
+                          <Input
+                            type="password"
+                            value={resetPassword}
+                            onChange={(e) => setResetPassword(e.target.value)}
+                            placeholder="Mínimo 6 caracteres"
+                            compact
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleSaveResetPassword(usuario.id)}
+                            loading={submitting}
+                            className="text-green-600 hover:text-green-700"
+                          >
+                            Guardar
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={cancelResetPassword}
+                            className="text-gray-500 hover:text-gray-700"
+                          >
+                            Cancelar
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </Fragment>
+              );
+            })}
         </TableBody>
       </Table>
     </div>
