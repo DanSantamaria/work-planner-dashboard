@@ -54,7 +54,7 @@ export default function Sidebar({ user }: { user: SidebarUser | null }) {
   return (
     <aside
       onClick={() => setExpandido((prev) => !prev)}
-      className={`flex flex-shrink-0 cursor-pointer flex-col bg-[#211E2F] transition-all duration-200 ${
+      className={`flex flex-shrink-0 cursor-pointer flex-col bg-sidebar transition-all duration-200 ${
         expandido ? "w-64" : "w-16"
       }`}
     >
@@ -97,7 +97,7 @@ export default function Sidebar({ user }: { user: SidebarUser | null }) {
               href={href}
               className={`flex items-center gap-3 rounded-lg px-3 py-2 ${
                 activo
-                  ? "text-[#E9865C]"
+                  ? "text-accent"
                   : "text-gray-300 hover:text-white"
               }`}
             >
@@ -142,7 +142,7 @@ export default function Sidebar({ user }: { user: SidebarUser | null }) {
             ) : (
               <Link
                 href="/login"
-                className="block rounded-lg bg-[#E9865C] px-4 py-2 text-center font-medium text-white hover:opacity-90"
+                className="block rounded-lg bg-accent px-4 py-2 text-center font-medium text-white hover:opacity-90"
               >
                 Iniciar Sesión
               </Link>

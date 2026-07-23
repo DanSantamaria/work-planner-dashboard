@@ -1,5 +1,7 @@
 "use client";
 
+import Button from "@/components/ui/Button";
+
 type Props = {
   publicada: boolean;
   isAdmin: boolean;
@@ -22,53 +24,33 @@ export default function SemanaEditBar({
   return (
     <div className="sticky bottom-0 mt-4 flex items-center justify-end gap-3 border-t border-gray-200 bg-white px-4 py-3 shadow-[0_-2px_8px_rgba(0,0,0,0.05)]">
       {!publicada && (
-        <button
-          onClick={onGuardar}
-          disabled={saving}
-          className="bg-[#211E2F] hover:opacity-90 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg cursor-pointer"
-        >
+        <Button variant="secondary" onClick={onGuardar} loading={saving}>
           {saving ? "Guardando..." : "Guardar Borrador"}
-        </button>
+        </Button>
       )}
 
       {!publicada && (
-        <button
-          onClick={onPublicar}
-          disabled={saving}
-          className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg cursor-pointer"
-        >
+        <Button variant="success" onClick={onPublicar} disabled={saving}>
           Publicar
-        </button>
+        </Button>
       )}
 
       {publicada && (
-        <button
-          onClick={onGuardar}
-          disabled={saving}
-          className="bg-[#211E2F] hover:opacity-90 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg cursor-pointer"
-        >
+        <Button variant="secondary" onClick={onGuardar} loading={saving}>
           {saving ? "Guardando..." : "Guardar"}
-        </button>
+        </Button>
       )}
 
       {publicada && (
-        <button
-          onClick={onDespublicar}
-          disabled={saving}
-          className="bg-[#E9865C] hover:opacity-90 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg cursor-pointer"
-        >
+        <Button variant="primary" onClick={onDespublicar} disabled={saving}>
           Despublicar
-        </button>
+        </Button>
       )}
 
       {isAdmin && (
-        <button
-          onClick={onEliminar}
-          disabled={saving}
-          className="bg-[#E81414] hover:opacity-90 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg cursor-pointer"
-        >
+        <Button variant="danger" onClick={onEliminar} disabled={saving}>
           Eliminar Semana
-        </button>
+        </Button>
       )}
     </div>
   );

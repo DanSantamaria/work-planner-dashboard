@@ -379,7 +379,7 @@ export default function SemanaView({
         {canEdit && (
           <button
             onClick={() => setShowModal(true)}
-            className="bg-[#211E2F] hover:opacity-90 text-white text-sm font-medium px-4 py-2 rounded-lg cursor-pointer"
+            className="bg-sidebar hover:opacity-90 text-white text-sm font-medium px-4 py-2 rounded-lg cursor-pointer"
           >
             + Nueva Semana
           </button>
@@ -416,17 +416,17 @@ export default function SemanaView({
           <button
             onClick={irAnterior}
             disabled={currentIndex <= 0}
-            className="cursor-pointer text-lg text-[#E9865C] hover:opacity-75 disabled:cursor-not-allowed disabled:opacity-30"
+            className="cursor-pointer text-lg text-accent hover:opacity-75 disabled:cursor-not-allowed disabled:opacity-30"
           >
             ◄
           </button>
-          <span className="text-lg font-bold text-[#E9865C]">
+          <span className="text-lg font-bold text-accent">
             Semana {formatearRangoSemana(semanaActual.fechaInicio)}
           </span>
           <button
             onClick={irSiguiente}
             disabled={currentIndex < 0 || currentIndex >= semanas.length - 1}
-            className="cursor-pointer text-lg text-[#E9865C] hover:opacity-75 disabled:cursor-not-allowed disabled:opacity-30"
+            className="cursor-pointer text-lg text-accent hover:opacity-75 disabled:cursor-not-allowed disabled:opacity-30"
           >
             ►
           </button>
@@ -435,7 +435,7 @@ export default function SemanaView({
         {canEdit && (
           <button
             onClick={() => setShowModal(true)}
-            className="cursor-pointer rounded-lg bg-[#211E2F] px-3 py-1.5 text-sm font-medium text-white hover:opacity-90"
+            className="cursor-pointer rounded-lg bg-sidebar px-3 py-1.5 text-sm font-medium text-white hover:opacity-90"
           >
             + Nueva Semana
           </button>
@@ -449,7 +449,7 @@ export default function SemanaView({
           <button
             onClick={handleEditarSemana}
             title={editMode ? "Cancelar Edición" : "Editar Semana"}
-            className="cursor-pointer rounded-lg bg-[#211E2F] p-2 text-white hover:opacity-90"
+            className="cursor-pointer rounded-lg bg-sidebar p-2 text-white hover:opacity-90"
           >
             {editMode ? <X size={18} /> : <Pencil size={18} />}
           </button>

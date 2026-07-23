@@ -14,7 +14,7 @@ export default async function PublicLayout({
 
   return (
     <BusquedaProvider>
-      <div className="flex h-screen bg-[#F2F2F2]">
+      <div className="flex h-screen bg-page">
         <Sidebar user={headerUser} />
         <div className="flex-1 flex flex-col">
           <Header user={headerUser} />

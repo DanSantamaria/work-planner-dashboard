@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { addDays } from "@/lib/date-utils";
 import TareaDropdown from "@/components/semana/TareaDropdown";
+import Badge from "@/components/ui/Badge";
 
 const DAY_NAMES = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
 
@@ -21,31 +22,28 @@ function esHoy(date: Date): boolean {
   return date.toDateString() === new Date().toDateString();
 }
 
-function getPillClasses(nombre: string): string {
-  const esCambioDeTurno = nombre.toUpperCase().includes("CAMBIO TURNO");
-  const acento = esCambioDeTurno ? " font-bold" : "";
-
-  if (nombre === "OFICINA") {
-    return `bg-[#C7FDFB] text-[#5E8A88] border border-[#5E8A88] rounded-md text-xs px-2 py-1${acento}`;
-  }
-  if (nombre === "AUSENTE") {
-    return `bg-[#FFE0E0] text-[#E81414] font-bold border border-[#E81414] rounded-md text-xs px-2 py-1${acento}`;
-  }
-  return `bg-gray-50 border text-gray-700 rounded-xl text-xs my-0.4 px-2 py-1${acento}`;
+function getPillVariant(nombre: string): "oficina" | "ausente" | "tarea" {
+  if (nombre === "OFICINA") return "oficina";
+  if (nombre === "AUSENTE") return "ausente";
+  return "tarea";
 }
 
-function getCeldaAccentColor(asignaciones: AsignacionCelda[]): string | null {
+function esPillBold(nombre: string): boolean {
+  return nombre === "AUSENTE" || nombre.toUpperCase().includes("CAMBIO TURNO");
+}
+
+function getCeldaAccentClass(asignaciones: AsignacionCelda[]): string {
   const nombres = asignaciones.map((a) => a.nombre);
-  if (nombres.includes("AUSENTE")) return "#FFE0E0";
-  if (nombres.includes("OFICINA")) return "#C7FDFB";
-  return null;
+  if (nombres.includes("AUSENTE")) return "border-l-8 border-l-ausente-bg";
+  if (nombres.includes("OFICINA")) return "border-l-8 border-l-oficina-bg";
+  return "";
 }
 
-function getLobColorHex(lob: string): string {
-  if (lob === "ESPAÑA") return "#FFE0E0";
-  if (lob === "FRANCIA") return "#D4E9FF";
-  if (lob === "IRLANDA") return "#F3FFED";
-  return "#F2F3FF"; // COORDINACION / Supervisor
+function getLobColorClass(lob: string): string {
+  if (lob === "ESPAÑA") return "bg-lob-espana";
+  if (lob === "FRANCIA") return "bg-lob-francia";
+  if (lob === "IRLANDA") return "bg-lob-irlanda";
+  return "bg-lob-coordinacion";
 }
 
 function CeldaEditable({
@@ -63,7 +61,7 @@ function CeldaEditable({
       {editando ? (
         <input
           autoFocus
-          className="absolute left-0 top-0 z-40 w-64 rounded border border-blue-400 bg-white px-1 py-0.5 text-gray-700 shadow-md"
+          className="absolute left-0 top-0 z-40 w-64 rounded border border-sidebar bg-white px-1 py-0.5 text-gray-700 shadow-md"
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
           onBlur={() => {
@@ -133,10 +131,10 @@ export default function SemanaGrid({
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr>
-            <th className="sticky left-0 z-20 w-48 border border-gray-300 bg-[#E6E6E6] px-4 py-3 text-left text-lg text-gray-800">
+            <th className="sticky left-0 z-20 w-48 border border-gray-300 bg-table-header px-4 py-3 text-left text-lg text-gray-800">
               Nombre
             </th>
-            <th className="sticky left-48 z-20 w-32 border border-gray-300 bg-[#E6E6E6] px-4 py-3 text-left text-lg text-gray-800">
+            <th className="sticky left-48 z-20 w-32 border border-gray-300 bg-table-header px-4 py-3 text-left text-lg text-gray-800">
               Horario
             </th>
             {weekDays.map((day) => {
@@ -145,8 +143,8 @@ export default function SemanaGrid({
               return (
                 <th
                   key={day.diaSemana}
-                  className={`whitespace-nowrap border border-gray-300 bg-[#E6E6E6] px-4 py-3 text-center text-gray-800 ${
-                    hoy ? "border-t-4 border-t-[#211E2F]" : ""
+                  className={`whitespace-nowrap border border-gray-300 bg-table-header px-4 py-3 text-center text-gray-800 ${
+                    hoy ? "border-t-4 border-t-sidebar" : ""
                   }`}
                 >
                   <div className="flex flex-col items-center">
@@ -165,8 +163,7 @@ export default function SemanaGrid({
             return (
               <tr key={empleado.id} className="bg-white">
                 <td
-                  style={{ backgroundColor: getLobColorHex(empleado.lob) }}
-                  className="border border-gray-300 px-2 font-semibold text-gray-700"
+                  className={`border border-gray-300 px-2 font-semibold text-gray-700 ${getLobColorClass(empleado.lob)}`}
                 >
                   {editable ? (
                     <CeldaEditable
@@ -189,17 +186,12 @@ export default function SemanaGrid({
                 </td>
                 {weekDays.map((day) => {
                   const asignacionesCelda = tareas[empleado.id]?.[day.diaSemana] ?? [];
-                  const colorAcento = getCeldaAccentColor(asignacionesCelda);
+                  const claseAcento = getCeldaAccentClass(asignacionesCelda);
 
                   return (
                     <td
                       key={day.diaSemana}
-                      style={
-                        colorAcento
-                          ? { borderLeftWidth: "8px", borderLeftColor: colorAcento }
-                          : undefined
-                      }
-                      className="border border-gray-300 px-4 py-2 align-top text-gray-700">
+                      className={`border border-gray-300 px-4 py-2 align-top text-gray-700 ${claseAcento}`}>
                       {editable ? (
                         <TareaDropdown
                           tareasDisponibles={tareasDisponibles}
@@ -211,11 +203,13 @@ export default function SemanaGrid({
                       ) : (
                         <div className="flex max-w-[220px] flex-wrap gap-1">
                           {asignacionesCelda.map((asignacion) => (
-                            <span
+                            <Badge
                               key={asignacion.tareaId}
-                              className={getPillClasses(asignacion.nombre)}>
+                              variant={getPillVariant(asignacion.nombre)}
+                              bold={esPillBold(asignacion.nombre)}
+                            >
                               {asignacion.nombre}
-                            </span>
+                            </Badge>
                           ))}
                         </div>
                       )}

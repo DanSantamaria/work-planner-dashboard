@@ -3,6 +3,8 @@
 import { Fragment, useState } from "react";
 import type { FormEvent } from "react";
 import { Role } from "@/generated/prisma/browser";
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
 
 const ROLE_OPTIONS = Object.values(Role);
 
@@ -180,12 +182,9 @@ export default function UsuariosTable({ initialUsuarios, currentUserId }: Props)
       )}
 
       <div className="mb-4">
-        <button
-          onClick={() => setShowForm((prev) => !prev)}
-          className="bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-lg cursor-pointer"
-        >
+        <Button onClick={() => setShowForm((prev) => !prev)} variant="primary">
           {showForm ? "Cancelar" : "+ Nuevo usuario"}
-        </button>
+        </Button>
       </div>
 
       {showForm && (
@@ -193,25 +192,25 @@ export default function UsuariosTable({ initialUsuarios, currentUserId }: Props)
           onSubmit={handleAddUsuario}
           className="mb-6 flex flex-col sm:flex-row flex-wrap gap-3 bg-white border border-gray-200 rounded-lg p-4"
         >
-          <input
-            className="flex-1 min-w-[160px] border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 placeholder:text-gray-400"
+          <Input
             placeholder="Nombre"
             value={newNombre}
             onChange={(e) => setNewNombre(e.target.value)}
             required
+            wrapperClassName="flex-1 min-w-[160px]"
           />
 
-          <input
-            className="flex-1 min-w-[200px] border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 placeholder:text-gray-400"
+          <Input
             placeholder="Email"
             type="email"
             value={newEmail}
             onChange={(e) => setNewEmail(e.target.value)}
             required
+            wrapperClassName="flex-1 min-w-[200px]"
           />
 
           <select
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700"
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sidebar"
             value={newRole}
             onChange={(e) => setNewRole(e.target.value as Role)}
           >
@@ -222,22 +221,18 @@ export default function UsuariosTable({ initialUsuarios, currentUserId }: Props)
             ))}
           </select>
 
-          <input
-            className="flex-1 min-w-[160px] border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 placeholder:text-gray-400"
+          <Input
             placeholder="Contraseña"
             type="password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             required
+            wrapperClassName="flex-1 min-w-[160px]"
           />
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg cursor-pointer"
-          >
+          <Button type="submit" variant="success" loading={submitting}>
             {submitting ? "Guardando..." : "Guardar"}
-          </button>
+          </Button>
         </form>
       )}
 
@@ -271,10 +266,10 @@ export default function UsuariosTable({ initialUsuarios, currentUserId }: Props)
                   <tr className={rowBg}>
                     <td className="border border-gray-200 px-4 py-2">
                       {isEditing ? (
-                        <input
-                          className="w-full border border-gray-300 rounded px-2 py-1 text-gray-700"
+                        <Input
                           value={editNombre}
                           onChange={(e) => setEditNombre(e.target.value)}
+                          compact
                         />
                       ) : (
                         <span className="text-gray-800 font-medium">
@@ -284,11 +279,11 @@ export default function UsuariosTable({ initialUsuarios, currentUserId }: Props)
                     </td>
                     <td className="border border-gray-200 px-4 py-2">
                       {isEditing ? (
-                        <input
-                          className="w-full border border-gray-300 rounded px-2 py-1 text-gray-700"
+                        <Input
                           type="email"
                           value={editEmail}
                           onChange={(e) => setEditEmail(e.target.value)}
+                          compact
                         />
                       ) : (
                         <span className="text-gray-600">{usuario.email}</span>
@@ -297,7 +292,7 @@ export default function UsuariosTable({ initialUsuarios, currentUserId }: Props)
                     <td className="border border-gray-200 px-4 py-2">
                       {isEditing ? (
                         <select
-                          className="w-full border border-gray-300 rounded px-2 py-1 text-gray-700"
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-gray-700 focus:outline-none focus:ring-2 focus:ring-sidebar"
                           value={editRole}
                           onChange={(e) =>
                             setEditRole(e.target.value as Role)
@@ -316,35 +311,45 @@ export default function UsuariosTable({ initialUsuarios, currentUserId }: Props)
                     <td className="border border-gray-200 px-4 py-2">
                       {isEditing ? (
                         <div className="flex gap-2">
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => handleSaveEdit(usuario.id)}
-                            disabled={submitting}
-                            className="text-green-600 hover:text-green-700 text-xs font-medium cursor-pointer disabled:opacity-50"
+                            loading={submitting}
+                            className="text-green-600 hover:text-green-700"
                           >
                             Guardar
-                          </button>
-                          <button
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={cancelEditing}
-                            className="text-gray-500 hover:text-gray-700 text-xs font-medium cursor-pointer"
+                            className="text-gray-500 hover:text-gray-700"
                           >
                             Cancelar
-                          </button>
+                          </Button>
                         </div>
                       ) : (
                         <div className="flex gap-3">
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => startEditing(usuario)}
-                            className="text-blue-600 hover:text-blue-700 text-xs font-medium cursor-pointer"
+                            className="text-blue-600 hover:text-blue-700"
                           >
                             Editar
-                          </button>
-                          <button
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => startResetPassword(usuario)}
-                            className="text-amber-600 hover:text-amber-700 text-xs font-medium cursor-pointer"
+                            className="text-amber-600 hover:text-amber-700"
                           >
                             Restablecer contraseña
-                          </button>
-                          <button
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => handleDelete(usuario)}
                             disabled={isSelf}
                             title={
@@ -352,10 +357,10 @@ export default function UsuariosTable({ initialUsuarios, currentUserId }: Props)
                                 ? "No puedes eliminar tu propio usuario"
                                 : undefined
                             }
-                            className="text-red-500 hover:text-red-600 text-xs font-medium cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                            className="text-red-500 hover:text-red-600"
                           >
                             Eliminar
-                          </button>
+                          </Button>
                         </div>
                       )}
                     </td>
@@ -371,26 +376,30 @@ export default function UsuariosTable({ initialUsuarios, currentUserId }: Props)
                           <span className="text-xs text-gray-500">
                             Nueva contraseña para {usuario.nombre}:
                           </span>
-                          <input
-                            className="border border-gray-300 rounded px-2 py-1 text-sm text-gray-700"
+                          <Input
                             type="password"
                             value={resetPassword}
                             onChange={(e) => setResetPassword(e.target.value)}
                             placeholder="Mínimo 6 caracteres"
+                            compact
                           />
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => handleSaveResetPassword(usuario.id)}
-                            disabled={submitting}
-                            className="text-green-600 hover:text-green-700 text-xs font-medium cursor-pointer disabled:opacity-50"
+                            loading={submitting}
+                            className="text-green-600 hover:text-green-700"
                           >
                             Guardar
-                          </button>
-                          <button
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={cancelResetPassword}
-                            className="text-gray-500 hover:text-gray-700 text-xs font-medium cursor-pointer"
+                            className="text-gray-500 hover:text-gray-700"
                           >
                             Cancelar
-                          </button>
+                          </Button>
                         </div>
                       </td>
                     </tr>

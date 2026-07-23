@@ -1,26 +1,28 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Work Planner Dashboard design tokens */
+  --color-sidebar: #211E2F;
+  --color-accent: #E9865C;
+  --color-page: #F2F2F2;
+  --color-table-header: #E6E6E6;
+
+  /* LOB colors */
+  --color-lob-espana: #FFE0E0;
+  --color-lob-francia: #D4E9FF;
+  --color-lob-irlanda: #F3FFED;
+  --color-lob-coordinacion: #F2F3FF;
+
+  /* Special task pills */
+  --color-oficina-bg: #C7FDFB;
+  --color-oficina-text: #5E8A88;
+  --color-ausente-bg: #FFE0E0;
+  --color-ausente-text: #E81414;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }

@@ -34,7 +34,7 @@ export default function Header({ user }: { user: HeaderUser | null }) {
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             placeholder="Buscar empleado..."
-            className="w-full rounded-lg border border-gray-300 py-2 pl-9 pr-4 text-sm text-gray-800 placeholder:text-gray-400"
+            className="w-full rounded-lg border border-gray-300 py-2 pl-9 pr-4 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-sidebar"
           />
         </div>
       </div>
@@ -67,7 +67,7 @@ export default function Header({ user }: { user: HeaderUser | null }) {
             <div className="absolute right-0 z-50 mt-2 w-48 rounded-lg border border-gray-200 bg-white p-2 text-sm shadow-lg">
               <Link
                 href="/login"
-                className="block rounded-lg bg-[#E9865C] px-4 py-2 text-center font-medium text-white hover:opacity-90"
+                className="block rounded-lg bg-accent px-4 py-2 text-center font-medium text-white hover:opacity-90"
               >
                 Iniciar Sesión
               </Link>

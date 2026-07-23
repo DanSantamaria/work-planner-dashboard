@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import type { FormEvent } from "react";
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
+import Badge from "@/components/ui/Badge";
 
 type Tarea = {
   id: string;
@@ -147,12 +150,9 @@ export default function TareasTable({ initialTareas }: Props) {
       )}
 
       <div className="mb-4">
-        <button
-          onClick={() => setShowForm((prev) => !prev)}
-          className="bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-lg cursor-pointer"
-        >
+        <Button onClick={() => setShowForm((prev) => !prev)} variant="primary">
           {showForm ? "Cancelar" : "+ Nueva tarea"}
-        </button>
+        </Button>
       </div>
 
       {showForm && (
@@ -160,26 +160,22 @@ export default function TareasTable({ initialTareas }: Props) {
           onSubmit={handleAddTarea}
           className="mb-6 flex flex-col sm:flex-row gap-3 bg-white border border-gray-200 rounded-lg p-4"
         >
-          <input
-            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 placeholder:text-gray-400"
+          <Input
             placeholder="Nombre de la tarea"
             value={newNombre}
             onChange={(e) => setNewNombre(e.target.value)}
             required
+            wrapperClassName="flex-1"
           />
-          <input
-            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 placeholder:text-gray-400"
+          <Input
             placeholder="Descripción (opcional)"
             value={newDescripcion}
             onChange={(e) => setNewDescripcion(e.target.value)}
+            wrapperClassName="flex-1"
           />
-          <button
-            type="submit"
-            disabled={submitting}
-            className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg cursor-pointer"
-          >
+          <Button type="submit" variant="success" loading={submitting}>
             {submitting ? "Guardando..." : "Guardar"}
-          </button>
+          </Button>
         </form>
       )}
 
@@ -210,10 +206,10 @@ export default function TareasTable({ initialTareas }: Props) {
                 <tr key={tarea.id} className={rowBg}>
                   <td className="border border-gray-200 px-4 py-2">
                     {isEditing ? (
-                      <input
-                        className="w-full border border-gray-300 rounded px-2 py-1 text-gray-700"
+                      <Input
                         value={editNombre}
                         onChange={(e) => setEditNombre(e.target.value)}
+                        compact
                       />
                     ) : (
                       <span className="text-gray-800 font-medium">
@@ -223,10 +219,10 @@ export default function TareasTable({ initialTareas }: Props) {
                   </td>
                   <td className="border border-gray-200 px-4 py-2">
                     {isEditing ? (
-                      <input
-                        className="w-full border border-gray-300 rounded px-2 py-1 text-gray-700"
+                      <Input
                         value={editDescripcion}
                         onChange={(e) => setEditDescripcion(e.target.value)}
+                        compact
                       />
                     ) : (
                       <span className="text-gray-600">
@@ -235,55 +231,59 @@ export default function TareasTable({ initialTareas }: Props) {
                     )}
                   </td>
                   <td className="border border-gray-200 px-4 py-2">
-                    <span
-                      className={`text-xs font-medium px-2 py-1 rounded-full ${
-                        tarea.activa
-                          ? "bg-green-100 text-green-700"
-                          : "bg-gray-200 text-gray-500"
-                      }`}
-                    >
+                    <Badge variant={tarea.activa ? "success" : "default"}>
                       {tarea.activa ? "Activa" : "Inactiva"}
-                    </span>
+                    </Badge>
                   </td>
                   <td className="border border-gray-200 px-4 py-2">
                     {isEditing ? (
                       <div className="flex gap-2">
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => handleSaveEdit(tarea.id)}
-                          disabled={submitting}
-                          className="text-green-600 hover:text-green-700 text-xs font-medium cursor-pointer disabled:opacity-50"
+                          loading={submitting}
+                          className="text-green-600 hover:text-green-700"
                         >
                           Guardar
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={cancelEditing}
-                          className="text-gray-500 hover:text-gray-700 text-xs font-medium cursor-pointer"
+                          className="text-gray-500 hover:text-gray-700"
                         >
                           Cancelar
-                        </button>
+                        </Button>
                       </div>
                     ) : (
                       <div className="flex gap-3">
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => startEditing(tarea)}
-                          className="text-blue-600 hover:text-blue-700 text-xs font-medium cursor-pointer"
+                          className="text-blue-600 hover:text-blue-700"
                         >
                           Editar
-                        </button>
+                        </Button>
                         {tarea.activa ? (
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => handleDelete(tarea)}
-                            className="text-red-500 hover:text-red-600 text-xs font-medium cursor-pointer"
+                            className="text-red-500 hover:text-red-600"
                           >
                             Eliminar
-                          </button>
+                          </Button>
                         ) : (
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => handleReactivar(tarea)}
-                            className="text-gray-500 hover:text-gray-700 text-xs font-medium cursor-pointer"
+                            className="text-gray-500 hover:text-gray-700"
                           >
                             Reactivar
-                          </button>
+                          </Button>
                         )}
                       </div>
                     )}

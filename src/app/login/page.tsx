@@ -4,6 +4,9 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
+import Card from "@/components/ui/Card";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -33,52 +36,39 @@ export default function LoginPage() {
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md">
+      <Card className="p-8 w-full max-w-md">
         <h1 className="text-2xl font-bold text-gray-800 mb-2">
           Iniciar Sesión
         </h1>
         <p className="text-blue-500 mb-6">Panel de administración CAC</p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
-            <input
-              className="w-full border text-gray-700 border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400"
-              name="email"
-              type="email"
-              placeholder="tu@email.com"
-            />
-          </div>
+          <Input
+            label="Email"
+            name="email"
+            type="email"
+            placeholder="tu@email.com"
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Contraseña
-            </label>
-            <input
-              className="w-full border text-gray-700 border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400"
-              name="password"
-              type="password"
-              placeholder="••••••••"
-            />
-          </div>
+          <Input
+            label="Contraseña"
+            name="password"
+            type="password"
+            placeholder="••••••••"
+          />
 
           {error && <p className="text-red-500 text-sm">{error}</p>}
 
-          <button
-            className="bg-blue-500 rounded-lg text-white py-2 font-medium hover:bg-blue-600 disabled:opacity-50 cursor-pointer"
-            type="submit"
-            disabled={loading}>
+          <Button type="submit" loading={loading} className="w-full">
             {loading ? "Entrando..." : "Entrar"}
-          </button>
+          </Button>
         </form>
         <Link
           href="/semana"
           className="text-sm text-blue-500 hover:text-blue-600 flex items-center gap-1 mb-4 mt-8">
           ← Volver al inicio
         </Link>
-      </div>
+      </Card>
     </main>
   );
 }

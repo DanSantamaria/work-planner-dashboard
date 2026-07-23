@@ -3,6 +3,9 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { LOB, Turno } from "@/generated/prisma/browser";
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
+import Badge from "@/components/ui/Badge";
 
 const LOB_OPTIONS = Object.values(LOB);
 const TURNO_OPTIONS = Object.values(Turno);
@@ -168,12 +171,9 @@ export default function EmpleadosTable({ initialEmpleados }: Props) {
       )}
 
       <div className="mb-4">
-        <button
-          onClick={() => setShowForm((prev) => !prev)}
-          className="bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-lg cursor-pointer"
-        >
+        <Button onClick={() => setShowForm((prev) => !prev)} variant="primary">
           {showForm ? "Cancelar" : "+ Nuevo empleado"}
-        </button>
+        </Button>
       </div>
 
       {showForm && (
@@ -181,16 +181,16 @@ export default function EmpleadosTable({ initialEmpleados }: Props) {
           onSubmit={handleAddEmpleado}
           className="mb-6 flex flex-col sm:flex-row flex-wrap gap-3 bg-white border border-gray-200 rounded-lg p-4"
         >
-          <input
-            className="flex-1 min-w-[160px] border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 placeholder:text-gray-400"
+          <Input
             placeholder="Nombre"
             value={newNombre}
             onChange={(e) => setNewNombre(e.target.value)}
             required
+            wrapperClassName="flex-1 min-w-[160px]"
           />
 
           <select
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700"
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sidebar"
             value={newLob}
             onChange={(e) => setNewLob(e.target.value as LOB)}
           >
@@ -202,7 +202,7 @@ export default function EmpleadosTable({ initialEmpleados }: Props) {
           </select>
 
           <select
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700"
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sidebar"
             value={newTurno}
             onChange={(e) => setNewTurno(e.target.value as Turno)}
           >
@@ -213,20 +213,16 @@ export default function EmpleadosTable({ initialEmpleados }: Props) {
             ))}
           </select>
 
-          <input
-            className="flex-1 min-w-[200px] border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 placeholder:text-gray-400"
+          <Input
             placeholder='Horario (ej. "07:00 - 15:00")'
             value={newHorario}
             onChange={(e) => setNewHorario(e.target.value)}
+            wrapperClassName="flex-1 min-w-[200px]"
           />
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg cursor-pointer"
-          >
+          <Button type="submit" variant="success" loading={submitting}>
             {submitting ? "Guardando..." : "Guardar"}
-          </button>
+          </Button>
         </form>
       )}
 
@@ -263,10 +259,10 @@ export default function EmpleadosTable({ initialEmpleados }: Props) {
                 >
                   <td className="border border-gray-200 px-4 py-2">
                     {isEditing ? (
-                      <input
-                        className="w-full border border-gray-300 rounded px-2 py-1 text-gray-700"
+                      <Input
                         value={editNombre}
                         onChange={(e) => setEditNombre(e.target.value)}
+                        compact
                       />
                     ) : (
                       <span className="text-gray-800 font-medium">
@@ -277,7 +273,7 @@ export default function EmpleadosTable({ initialEmpleados }: Props) {
                   <td className="border border-gray-200 px-4 py-2">
                     {isEditing ? (
                       <select
-                        className="w-full border border-gray-300 rounded px-2 py-1 text-gray-700"
+                        className="w-full border border-gray-300 rounded px-2 py-1 text-gray-700 focus:outline-none focus:ring-2 focus:ring-sidebar"
                         value={editLob}
                         onChange={(e) => setEditLob(e.target.value as LOB)}
                       >
@@ -293,10 +289,10 @@ export default function EmpleadosTable({ initialEmpleados }: Props) {
                   </td>
                   <td className="border border-gray-200 px-4 py-2">
                     {isEditing ? (
-                      <input
-                        className="w-full border border-gray-300 rounded px-2 py-1 text-gray-700"
+                      <Input
                         value={editHorario}
                         onChange={(e) => setEditHorario(e.target.value)}
+                        compact
                       />
                     ) : (
                       <span className="text-gray-600">
@@ -305,55 +301,59 @@ export default function EmpleadosTable({ initialEmpleados }: Props) {
                     )}
                   </td>
                   <td className="border border-gray-200 px-4 py-2">
-                    <span
-                      className={`text-xs font-medium px-2 py-1 rounded-full ${
-                        empleado.activo
-                          ? "bg-green-100 text-green-700"
-                          : "bg-gray-200 text-gray-500"
-                      }`}
-                    >
+                    <Badge variant={empleado.activo ? "success" : "default"}>
                       {empleado.activo ? "Activo" : "Inactivo"}
-                    </span>
+                    </Badge>
                   </td>
                   <td className="border border-gray-200 px-4 py-2">
                     {isEditing ? (
                       <div className="flex gap-2">
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => handleSaveEdit(empleado.id)}
-                          disabled={submitting}
-                          className="text-green-600 hover:text-green-700 text-xs font-medium cursor-pointer disabled:opacity-50"
+                          loading={submitting}
+                          className="text-green-600 hover:text-green-700"
                         >
                           Guardar
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={cancelEditing}
-                          className="text-gray-500 hover:text-gray-700 text-xs font-medium cursor-pointer"
+                          className="text-gray-500 hover:text-gray-700"
                         >
                           Cancelar
-                        </button>
+                        </Button>
                       </div>
                     ) : (
                       <div className="flex gap-3">
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => startEditing(empleado)}
-                          className="text-blue-600 hover:text-blue-700 text-xs font-medium cursor-pointer"
+                          className="text-blue-600 hover:text-blue-700"
                         >
                           Editar
-                        </button>
+                        </Button>
                         {empleado.activo ? (
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => handleDelete(empleado)}
-                            className="text-red-500 hover:text-red-600 text-xs font-medium cursor-pointer"
+                            className="text-red-500 hover:text-red-600"
                           >
                             Eliminar
-                          </button>
+                          </Button>
                         ) : (
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => handleReactivar(empleado)}
-                            className="text-gray-500 hover:text-gray-700 text-xs font-medium cursor-pointer"
+                            className="text-gray-500 hover:text-gray-700"
                           >
                             Reactivar
-                          </button>
+                          </Button>
                         )}
                       </div>
                     )}
