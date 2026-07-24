@@ -22,9 +22,12 @@ function esHoy(date: Date): boolean {
   return date.toDateString() === new Date().toDateString();
 }
 
-function getPillVariant(nombre: string): "oficina" | "ausente" | "tarea" {
+function getPillVariant(
+  nombre: string
+): "oficina" | "ausente" | "recepcion" | "tarea" {
   if (nombre === "OFICINA") return "oficina";
   if (nombre === "AUSENTE") return "ausente";
+  if (nombre === "RECEPCION") return "recepcion";
   return "tarea";
 }
 

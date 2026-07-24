@@ -21,6 +21,8 @@
   --color-oficina-text: #5E8A88;
   --color-ausente-bg: #FFE0E0;
   --color-ausente-text: #E81414;
+  --color-recepcion-bg: #FFF6D1;
+  --color-recepcion-text: #8A6D00;
 }
 
 body {

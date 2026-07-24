@@ -24,6 +24,9 @@ function getPillClasses(nombre: string): string {
   if (nombre === "AUSENTE") {
     return `inline-block bg-ausente-bg text-ausente-text font-bold border border-ausente-text rounded-md text-xs px-2 py-1${acento}`;
   }
+  if (nombre === "RECEPCION") {
+    return `inline-block bg-recepcion-bg text-recepcion-text border border-recepcion-text rounded-md text-xs px-2 py-1${acento}`;
+  }
   return `inline-block bg-gray-200 text-gray-700 rounded-md text-xs px-2 py-1${acento}`;
 }
 

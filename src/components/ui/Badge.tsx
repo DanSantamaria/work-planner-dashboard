@@ -4,6 +4,7 @@ type BadgeVariant =
   | "default"
   | "oficina"
   | "ausente"
+  | "recepcion"
   | "success"
   | "warning"
   | "tarea";
@@ -18,6 +19,7 @@ const VARIANT_CLASSES: Record<BadgeVariant, string> = {
   default: "bg-gray-200 text-gray-500 rounded-full",
   oficina: "bg-oficina-bg text-oficina-text border border-oficina-text rounded-md",
   ausente: "bg-ausente-bg text-ausente-text border border-ausente-text rounded-md",
+  recepcion: "bg-recepcion-bg text-recepcion-text border border-recepcion-text rounded-md",
   success: "bg-green-100 text-green-700 rounded-full",
   warning: "bg-amber-100 text-amber-700 rounded-full",
   tarea: "bg-gray-50 border text-gray-700 rounded-xl my-0.4",
