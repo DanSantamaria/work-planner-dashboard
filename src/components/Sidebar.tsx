@@ -6,13 +6,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import {
-  CalendarDays,
-  Calendar,
+  ClockPlus,
+  CalendarRange,
   Users,
   UserCog,
   ListChecks,
-  ChevronLeft,
-  ChevronRight,
+  PanelLeftClose,
+  PanelRightClose,
   Settings,
   LogOut,
 } from "lucide-react";
@@ -27,13 +27,13 @@ type SidebarUser = {
 type NavItem = {
   href: string;
   label: string;
-  Icon: typeof CalendarDays;
+  Icon: typeof ClockPlus;
   roles: Role[] | null;
 };
 
 const NAV_ITEMS: NavItem[] = [
-  { href: "/semana", label: "Organización Semanal", Icon: CalendarDays, roles: null },
-  { href: "/calendario", label: "Calendario", Icon: Calendar, roles: null },
+  { href: "/semana", label: "Organización Semanal", Icon: ClockPlus, roles: null },
+  { href: "/calendario", label: "Calendario", Icon: CalendarRange, roles: null },
   { href: "/empleados", label: "Empleados", Icon: Users, roles: ["ADMIN", "SUPERVISOR"] },
   { href: "/tareas", label: "Tareas", Icon: ListChecks, roles: ["ADMIN", "SUPERVISOR"] },
   { href: "/usuarios", label: "Usuarios", Icon: UserCog, roles: ["ADMIN"] },
@@ -79,9 +79,11 @@ export default function Sidebar({ user }: { user: SidebarUser | null }) {
           e.stopPropagation();
           setExpandido((prev) => !prev);
         }}
-        className="flex cursor-pointer items-center justify-center border-y border-white/10 py-2 text-gray-400 hover:text-white"
+        className={`flex cursor-pointer items-center border-y border-white/10 py-2 text-gray-400 hover:text-white ${
+          expandido ? "justify-end px-4" : "justify-center"
+        }`}
       >
-        {expandido ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
+        {expandido ? <PanelLeftClose size={18} /> : <PanelRightClose size={18} />}
       </button>
 
       <nav
