@@ -44,6 +44,13 @@ enum OrigenVacacion {
   ANIO_ACTUAL
 }
 
+// Which balance a NOTA's `horas` value gets subtracted from — unlike
+// OrigenVacacion, this one IS branched on in the API, not just a label.
+enum TipoHoras {
+  MEDICA
+  EXCESO
+}
+
 // ─────────────────────────────────────────
 // MODELS - These become your database tables
 // ─────────────────────────────────────────
@@ -179,9 +186,11 @@ model Evento {
   // waiting on the agent to explain, needs supervisor follow-up
   justificada Boolean?
 
-  // Only set when tipo = NOTA and it was a medical appointment
-  esCitaMedica Boolean @default(false)
-  horas        Float?  // hours to subtract from horasMedicasUsadas
+  // Only set when tipo = NOTA and hours are being logged against a
+  // balance — decides which pool `horas` comes out of. null = a plain
+  // note with no hours attached.
+  tipoHoras TipoHoras?
+  horas     Float?      // hours to subtract from the pool tipoHoras points to
 
   empleado   Empleado @relation(fields: [empleadoId], references: [id])
   empleadoId String
