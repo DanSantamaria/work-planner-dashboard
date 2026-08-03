@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { isPrismaError } from "@/lib/prisma-errors";
 import { requireRole } from "@/lib/api-auth";
@@ -11,11 +12,31 @@ import {
 
 export async function GET() {
   try {
+    const session = await auth();
+    const esStaff =
+      session?.user?.role === "ADMIN" || session?.user?.role === "SUPERVISOR";
+
     const eventos = await prisma.evento.findMany({
       orderBy: { fecha: "asc" },
     });
 
-    return NextResponse.json(eventos, { status: 200 });
+    if (esStaff) {
+      return NextResponse.json(eventos, { status: 200 });
+    }
+
+    // Non-staff callers only get what's needed to color a calendar cell —
+    // never notas, justificada, or the medical/exceso hour detail.
+    const eventosPublicos = eventos.map(
+      ({ id, fecha, tipo, origenVacacion, empleadoId }) => ({
+        id,
+        fecha,
+        tipo,
+        origenVacacion,
+        empleadoId,
+      })
+    );
+
+    return NextResponse.json(eventosPublicos, { status: 200 });
   } catch (error) {
     console.error("Error al obtener eventos:", error);
     return NextResponse.json(
