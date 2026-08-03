@@ -11,14 +11,18 @@ export default async function EmpleadosPage() {
     redirect("/semana");
   }
 
-  const empleados = await prisma.empleado.findMany({
-    orderBy: { nombre: "asc" },
-  });
+  const [empleados, grupos] = await Promise.all([
+    prisma.empleado.findMany({
+      orderBy: { nombre: "asc" },
+      include: { grupo: { select: { id: true, nombre: true, orden: true } } },
+    }),
+    prisma.grupo.findMany({ orderBy: { orden: "asc" } }),
+  ]);
 
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-800 mb-6">Empleados</h1>
-      <EmpleadosTable initialEmpleados={empleados} />
+      <EmpleadosTable initialEmpleados={empleados} initialGrupos={grupos} />
     </div>
   );
 }

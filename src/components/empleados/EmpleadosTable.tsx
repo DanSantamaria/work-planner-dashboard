@@ -3,8 +3,9 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { LOB, Turno } from "@/generated/prisma/browser";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, ChevronUp, ChevronDown } from "lucide-react";
 import { useBusqueda } from "@/context/BusquedaContext";
+import { ordenarEmpleados, agruparPorGrupo } from "@/lib/orden-empleados";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Badge from "@/components/ui/Badge";
@@ -20,6 +21,8 @@ import {
 const LOB_OPTIONS = Object.values(LOB);
 const TURNO_OPTIONS = Object.values(Turno);
 
+type Grupo = { id: string; nombre: string; orden: number };
+
 type Empleado = {
   id: string;
   nombre: string;
@@ -27,21 +30,24 @@ type Empleado = {
   turno: Turno;
   horario: string;
   activo: boolean;
+  grupoId: string | null;
+  ordenEnGrupo: number;
+  grupo: { id: string; nombre: string; orden: number } | null;
 };
 
 type Props = {
   initialEmpleados: Empleado[];
+  initialGrupos: Grupo[];
 };
 
-function sortByNombre(empleados: Empleado[]) {
-  return [...empleados].sort((a, b) => a.nombre.localeCompare(b.nombre));
-}
-
-export default function EmpleadosTable({ initialEmpleados }: Props) {
+export default function EmpleadosTable({
+  initialEmpleados,
+  initialGrupos,
+}: Props) {
   const { busqueda } = useBusqueda();
-  const [empleados, setEmpleados] = useState<Empleado[]>(
-    sortByNombre(initialEmpleados)
-  );
+  const [empleados, setEmpleados] = useState<Empleado[]>(initialEmpleados);
+  const [gruposDisponibles, setGruposDisponibles] =
+    useState<Grupo[]>(initialGrupos);
   const [error, setError] = useState<string | null>(null);
 
   const [showForm, setShowForm] = useState(false);
@@ -55,6 +61,16 @@ export default function EmpleadosTable({ initialEmpleados }: Props) {
   const [editNombre, setEditNombre] = useState("");
   const [editLob, setEditLob] = useState<LOB>(LOB_OPTIONS[0]);
   const [editHorario, setEditHorario] = useState("");
+
+  const [showGrupoForm, setShowGrupoForm] = useState(false);
+  const [newGrupoNombre, setNewGrupoNombre] = useState("");
+  const [creatingGrupo, setCreatingGrupo] = useState(false);
+
+  function actualizarEmpleadoLocal(id: string, datos: Partial<Empleado>) {
+    setEmpleados((prev) =>
+      prev.map((emp) => (emp.id === id ? { ...emp, ...datos } : emp))
+    );
+  }
 
   async function handleAddEmpleado(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -80,7 +96,7 @@ export default function EmpleadosTable({ initialEmpleados }: Props) {
       return;
     }
 
-    setEmpleados((prev) => sortByNombre([...prev, data]));
+    setEmpleados((prev) => [...prev, { ...data, grupo: null }]);
     setNewNombre("");
     setNewLob(LOB_OPTIONS[0]);
     setNewTurno(TURNO_OPTIONS[0]);
@@ -122,9 +138,7 @@ export default function EmpleadosTable({ initialEmpleados }: Props) {
       return;
     }
 
-    setEmpleados((prev) =>
-      sortByNombre(prev.map((emp) => (emp.id === id ? data : emp)))
-    );
+    actualizarEmpleadoLocal(id, data);
     setEditingId(null);
   }
 
@@ -147,9 +161,7 @@ export default function EmpleadosTable({ initialEmpleados }: Props) {
       return;
     }
 
-    setEmpleados((prev) =>
-      prev.map((emp) => (emp.id === empleado.id ? data : emp))
-    );
+    actualizarEmpleadoLocal(empleado.id, data);
   }
 
   async function handleReactivar(empleado: Empleado) {
@@ -168,10 +180,130 @@ export default function EmpleadosTable({ initialEmpleados }: Props) {
       return;
     }
 
+    actualizarEmpleadoLocal(empleado.id, data);
+  }
+
+  async function handleGrupoChange(empleado: Empleado, nuevoGrupoId: string) {
+    setError(null);
+    const grupoIdFinal = nuevoGrupoId || null;
+
+    const empleadosDelGrupoDestino = empleados.filter(
+      (e) => e.grupoId === grupoIdFinal && e.id !== empleado.id
+    );
+    const maxOrden = empleadosDelGrupoDestino.reduce(
+      (max, e) => Math.max(max, e.ordenEnGrupo),
+      -1
+    );
+    const nuevoOrden = maxOrden + 1;
+
+    const res = await fetch(`/api/empleados/${empleado.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ grupoId: grupoIdFinal, ordenEnGrupo: nuevoOrden }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      setError(data.error ?? "No se pudo actualizar el grupo");
+      return;
+    }
+
+    const grupoEncontrado =
+      gruposDisponibles.find((g) => g.id === grupoIdFinal) ?? null;
+    actualizarEmpleadoLocal(empleado.id, {
+      grupoId: grupoIdFinal,
+      ordenEnGrupo: nuevoOrden,
+      grupo: grupoEncontrado,
+    });
+  }
+
+  // Ties (everyone starts at ordenEnGrupo 0) mean a plain value-swap between
+  // two tied rows would visibly do nothing on the first click. Reassigning
+  // the whole group to 0..N-1 in the new order guarantees the move always
+  // works, and permanently resolves ties within that group afterward.
+  async function moverEmpleado(
+    empleadosDelGrupo: Empleado[],
+    index: number,
+    direccion: -1 | 1
+  ) {
+    const otroIndex = index + direccion;
+    if (otroIndex < 0 || otroIndex >= empleadosDelGrupo.length) return;
+
+    const reordenado = [...empleadosDelGrupo];
+    [reordenado[index], reordenado[otroIndex]] = [
+      reordenado[otroIndex],
+      reordenado[index],
+    ];
+
+    setError(null);
+
+    const resultados = await Promise.all(
+      reordenado.map(async (empleado, i) => {
+        const res = await fetch(`/api/empleados/${empleado.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ordenEnGrupo: i }),
+        });
+        return { id: empleado.id, ordenEnGrupo: i, ok: res.ok };
+      })
+    );
+
+    if (resultados.some((r) => !r.ok)) {
+      setError("No se pudo reordenar");
+      return;
+    }
+
     setEmpleados((prev) =>
-      prev.map((emp) => (emp.id === empleado.id ? data : emp))
+      prev.map((emp) => {
+        const actualizado = resultados.find((r) => r.id === emp.id);
+        return actualizado
+          ? { ...emp, ordenEnGrupo: actualizado.ordenEnGrupo }
+          : emp;
+      })
     );
   }
+
+  async function handleAddGrupo(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(null);
+    setCreatingGrupo(true);
+
+    const res = await fetch("/api/grupos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nombre: newGrupoNombre }),
+    });
+
+    const data = await res.json();
+    setCreatingGrupo(false);
+
+    if (!res.ok) {
+      setError(data.error ?? "No se pudo crear el grupo");
+      return;
+    }
+
+    setGruposDisponibles((prev) => [...prev, data]);
+    setNewGrupoNombre("");
+    setShowGrupoForm(false);
+  }
+
+  const empleadosFiltrados = empleados.filter((empleado) =>
+    empleado.nombre.toLowerCase().includes(busqueda.toLowerCase())
+  );
+  const grupos = agruparPorGrupo(ordenarEmpleados(empleadosFiltrados));
+
+  // Flattened once so the row-stripe index runs continuously across group
+  // boundaries, while indexEnGrupo/grupoEmpleados stay available for the
+  // up/down controls (which only care about position within their own group).
+  let contadorFila = 0;
+  const filas = grupos.flatMap((grupo) =>
+    grupo.empleados.map((empleado, indexEnGrupo) => ({
+      empleado,
+      grupoEmpleados: grupo.empleados,
+      indexEnGrupo,
+      indexGlobal: contadorFila++,
+    }))
+  );
 
   return (
     <div>
@@ -181,9 +313,15 @@ export default function EmpleadosTable({ initialEmpleados }: Props) {
         </div>
       )}
 
-      <div className="mb-4">
+      <div className="mb-4 flex flex-wrap gap-3">
         <Button onClick={() => setShowForm((prev) => !prev)} variant="primary">
           {showForm ? "Cancelar" : "+ Nuevo empleado"}
+        </Button>
+        <Button
+          onClick={() => setShowGrupoForm((prev) => !prev)}
+          variant="secondary"
+        >
+          {showGrupoForm ? "Cancelar" : "+ Nuevo grupo"}
         </Button>
       </div>
 
@@ -237,28 +375,43 @@ export default function EmpleadosTable({ initialEmpleados }: Props) {
         </form>
       )}
 
+      {showGrupoForm && (
+        <form
+          onSubmit={handleAddGrupo}
+          className="mb-6 flex flex-col sm:flex-row flex-wrap gap-3 bg-white border border-gray-200 rounded-lg p-4"
+        >
+          <Input
+            placeholder='Nombre del grupo (ej. "Grupo 1")'
+            value={newGrupoNombre}
+            onChange={(e) => setNewGrupoNombre(e.target.value)}
+            required
+            wrapperClassName="flex-1 min-w-[200px]"
+          />
+          <Button type="submit" variant="success" loading={creatingGrupo}>
+            {creatingGrupo ? "Guardando..." : "Guardar"}
+          </Button>
+        </form>
+      )}
+
       <Table>
         <TableHead>
           <TableHeaderCell>Nombre</TableHeaderCell>
+          <TableHeaderCell>Grupo</TableHeaderCell>
           <TableHeaderCell>LOB</TableHeaderCell>
           <TableHeaderCell>Horario</TableHeaderCell>
           <TableHeaderCell>Estado</TableHeaderCell>
           <TableHeaderCell>Acciones</TableHeaderCell>
         </TableHead>
         <TableBody>
-          {empleados
-            .filter((empleado) =>
-              empleado.nombre.toLowerCase().includes(busqueda.toLowerCase())
-            )
-            .map((empleado, index) => {
-              const isEditing = editingId === empleado.id;
+          {filas.map(({ empleado, grupoEmpleados, indexEnGrupo, indexGlobal }) => {
+            const isEditing = editingId === empleado.id;
 
-              return (
-                <TableRow
-                  key={empleado.id}
-                  index={index}
-                  className={!empleado.activo ? "opacity-50" : ""}
-                >
+            return (
+              <TableRow
+                key={empleado.id}
+                index={indexGlobal}
+                className={!empleado.activo ? "opacity-50" : ""}
+              >
                   <TableCell>
                     {isEditing ? (
                       <Input
@@ -271,6 +424,48 @@ export default function EmpleadosTable({ initialEmpleados }: Props) {
                         {empleado.nombre}
                       </span>
                     )}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      <div className="flex flex-col">
+                        <button
+                          type="button"
+                          disabled={indexEnGrupo === 0}
+                          onClick={() =>
+                            moverEmpleado(grupoEmpleados, indexEnGrupo, -1)
+                          }
+                          className="text-gray-400 hover:text-gray-700 disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer"
+                          aria-label="Subir"
+                        >
+                          <ChevronUp size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={indexEnGrupo === grupoEmpleados.length - 1}
+                          onClick={() =>
+                            moverEmpleado(grupoEmpleados, indexEnGrupo, 1)
+                          }
+                          className="text-gray-400 hover:text-gray-700 disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer"
+                          aria-label="Bajar"
+                        >
+                          <ChevronDown size={14} />
+                        </button>
+                      </div>
+                      <select
+                        className="border border-gray-300 rounded px-2 py-1 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sidebar"
+                        value={empleado.grupoId ?? ""}
+                        onChange={(e) =>
+                          handleGrupoChange(empleado, e.target.value)
+                        }
+                      >
+                        <option value="">Sin grupo</option>
+                        {gruposDisponibles.map((g) => (
+                          <option key={g.id} value={g.id}>
+                            {g.nombre}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </TableCell>
                   <TableCell>
                     {isEditing ? (
