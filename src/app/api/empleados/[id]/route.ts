@@ -24,6 +24,8 @@ export async function PUT(request: Request, { params }: RouteContext) {
       diasVacaciones,
       horasExceso,
       horasMedicasTotal,
+      grupoId,
+      ordenEnGrupo,
     } = body;
 
     if (
@@ -57,6 +59,24 @@ export async function PUT(request: Request, { params }: RouteContext) {
       }
     }
 
+    if (
+      grupoId !== undefined &&
+      grupoId !== null &&
+      typeof grupoId !== "string"
+    ) {
+      return NextResponse.json({ error: "grupoId inválido" }, { status: 400 });
+    }
+
+    if (
+      ordenEnGrupo !== undefined &&
+      (typeof ordenEnGrupo !== "number" || ordenEnGrupo < 0)
+    ) {
+      return NextResponse.json(
+        { error: "ordenEnGrupo debe ser un número mayor o igual a cero" },
+        { status: 400 }
+      );
+    }
+
     const empleado = await prisma.empleado.update({
       where: { id },
       data: {
@@ -70,6 +90,8 @@ export async function PUT(request: Request, { params }: RouteContext) {
         ...(diasVacaciones !== undefined && { diasVacaciones }),
         ...(horasExceso !== undefined && { horasExceso }),
         ...(horasMedicasTotal !== undefined && { horasMedicasTotal }),
+        ...(grupoId !== undefined && { grupoId }),
+        ...(ordenEnGrupo !== undefined && { ordenEnGrupo }),
       },
     });
 
