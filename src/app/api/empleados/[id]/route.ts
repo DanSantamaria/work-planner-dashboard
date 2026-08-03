@@ -15,7 +15,16 @@ export async function PUT(request: Request, { params }: RouteContext) {
   try {
     const { id } = await params;
     const body = await request.json();
-    const { nombre, lob, turno, horario, activo } = body;
+    const {
+      nombre,
+      lob,
+      turno,
+      horario,
+      activo,
+      diasVacaciones,
+      horasExceso,
+      horasMedicasTotal,
+    } = body;
 
     if (
       nombre !== undefined &&
@@ -35,6 +44,19 @@ export async function PUT(request: Request, { params }: RouteContext) {
       return NextResponse.json({ error: "Turno inválido" }, { status: 400 });
     }
 
+    for (const [campo, valor] of [
+      ["diasVacaciones", diasVacaciones],
+      ["horasExceso", horasExceso],
+      ["horasMedicasTotal", horasMedicasTotal],
+    ] as const) {
+      if (valor !== undefined && (typeof valor !== "number" || valor < 0)) {
+        return NextResponse.json(
+          { error: `${campo} debe ser un número mayor o igual a cero` },
+          { status: 400 }
+        );
+      }
+    }
+
     const empleado = await prisma.empleado.update({
       where: { id },
       data: {
@@ -45,6 +67,9 @@ export async function PUT(request: Request, { params }: RouteContext) {
           horario: typeof horario === "string" ? horario.trim() : "",
         }),
         ...(activo !== undefined && { activo }),
+        ...(diasVacaciones !== undefined && { diasVacaciones }),
+        ...(horasExceso !== undefined && { horasExceso }),
+        ...(horasMedicasTotal !== undefined && { horasMedicasTotal }),
       },
     });
 
