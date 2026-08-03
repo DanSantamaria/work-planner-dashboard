@@ -10,13 +10,21 @@ import {
   TipoHoras,
 } from "@/generated/prisma/client";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const session = await auth();
     const esStaff =
       session?.user?.role === "ADMIN" || session?.user?.role === "SUPERVISOR";
 
+    const { searchParams } = new URL(request.url);
+    const desde = searchParams.get("desde");
+    const hasta = searchParams.get("hasta");
+
     const eventos = await prisma.evento.findMany({
+      where:
+        desde && hasta
+          ? { fecha: { gte: new Date(desde), lte: new Date(hasta) } }
+          : undefined,
       orderBy: { fecha: "asc" },
     });
 

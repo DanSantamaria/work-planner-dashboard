@@ -3,9 +3,17 @@ import { prisma } from "@/lib/prisma";
 import { isPrismaError } from "@/lib/prisma-errors";
 import { requireRole } from "@/lib/api-auth";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const desde = searchParams.get("desde");
+    const hasta = searchParams.get("hasta");
+
     const feriados = await prisma.feriado.findMany({
+      where:
+        desde && hasta
+          ? { fecha: { gte: new Date(desde), lte: new Date(hasta) } }
+          : undefined,
       orderBy: { fecha: "asc" },
     });
 
