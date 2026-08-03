@@ -23,6 +23,16 @@
   --color-ausente-text: #E81414;
   --color-recepcion-bg: #FFF6D1;
   --color-recepcion-text: #8A6D00;
+
+  /* Calendario pills */
+  --color-vacacion-bg: #D4F5DA;
+  --color-vacacion-text: #1B7A3B;
+  --color-vacacion-anterior-bg: #E8F5E9;
+  --color-vacacion-anterior-text: #5A8F63;
+  --color-nota-bg: #EDE3FF;
+  --color-nota-text: #6B3FA0;
+  --color-feriado-bg: #E2E2E2;
+  --color-feriado-text: #5A5A5A;
 }
 
 body {
