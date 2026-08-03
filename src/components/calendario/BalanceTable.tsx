@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useBusqueda } from "@/context/BusquedaContext";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import {
@@ -114,6 +115,7 @@ function BalanceCelda({
 }
 
 export default function BalanceTable({ initialEmpleados, isStaff }: Props) {
+  const { busqueda } = useBusqueda();
   const [empleados, setEmpleados] = useState<Empleado[]>(initialEmpleados);
   const [edicion, setEdicion] = useState<EdicionActiva>(null);
   const [valorEdicion, setValorEdicion] = useState("");
@@ -178,7 +180,11 @@ export default function BalanceTable({ initialEmpleados, isStaff }: Props) {
           <TableHeaderCell>Horas médicas</TableHeaderCell>
         </TableHead>
         <TableBody>
-          {empleados.map((empleado, index) => (
+          {empleados
+            .filter((empleado) =>
+              empleado.nombre.toLowerCase().includes(busqueda.toLowerCase())
+            )
+            .map((empleado, index) => (
             <TableRow key={empleado.id} index={index}>
               <TableCell>
                 <span className="text-gray-800 font-medium">
