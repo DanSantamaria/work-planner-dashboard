@@ -30,13 +30,18 @@ enum Turno {
   NOCTURNO
 }
 
-enum TipoAusencia {
-  VACACIONES
-  BAJA_MEDICA
-  MEDICO
-  LLEGADA_TARDE
-  SALIDA_TEMPRANA
-  OTRO
+enum TipoEvento {
+  VACACION
+  AUSENCIA
+  NOTA
+}
+
+// Label only — for the two-shades-of-green display and for reporting.
+// Does NOT decide which balance field gets decremented; every VACACION
+// event increments diasVacacionesUsados regardless.
+enum OrigenVacacion {
+  ANIO_ANTERIOR
+  ANIO_ACTUAL
 }
 
 // ─────────────────────────────────────────
@@ -66,16 +71,26 @@ model Empleado {
   // Holiday balance
   diasVacaciones        Int   @default(22)
   diasVacacionesUsados  Int   @default(0)
-  
-  // Medical hours balance  
+
+  // Overtime-compensation hours balance — separate pool from vacation
+  // days, never merged into the day count
+  horasExceso        Float @default(0)
+  horasExcesoUsadas  Float @default(0)
+
+  // Medical hours balance
   horasMedicasTotal     Float @default(16)
   horasMedicasUsadas    Float @default(0)
+
+  // Manual grouping/ordering only — no automatic rotation logic
+  grupo        Grupo?  @relation(fields: [grupoId], references: [id])
+  grupoId      String?
+  ordenEnGrupo Int     @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   asignaciones  AsignacionSemanal[]
-  ausencias     Ausencia[]
+  eventos       Evento[]
 
   @@map("empleados")
 }
@@ -129,18 +144,51 @@ model AsignacionSemanal {
   @@map("asignaciones_semanales")
 }
 
-model Ausencia {
-  id          String       @id @default(cuid())
-  fecha       DateTime
-  tipo        TipoAusencia
-  horas       Float?       // Only for MEDICO type
-  notas       String?      // Internal only, never shown to employees
-  
-  empleado    Empleado @relation(fields: [empleadoId], references: [id])
-  empleadoId  String
+model Feriado {
+  id     String   @id @default(cuid())
+  fecha  DateTime @unique
+  nombre String   // "Fiesta Nacional de España", "Puente decidido por la empresa"...
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("ausencias")
+  @@map("feriados")
+}
+
+model Grupo {
+  id     String @id @default(cuid())
+  nombre String @unique // "Supervisores", "Grupo 1", "Fines de Semana y Nocturno"...
+  orden  Int    @default(0) // display order of the group itself
+
+  empleados Empleado[]
+
+  @@map("grupos")
+}
+
+model Evento {
+  id        String     @id @default(cuid())
+  fecha     DateTime
+  tipo      TipoEvento
+  notas     String?    // free text; internal only, never sent to public view
+
+  // Only set when tipo = VACACION — which year's days does this look
+  // like it came from? Purely descriptive, see comment on the enum above.
+  origenVacacion OrigenVacacion?
+
+  // Only set when tipo = AUSENCIA — was it justified? null = still
+  // waiting on the agent to explain, needs supervisor follow-up
+  justificada Boolean?
+
+  // Only set when tipo = NOTA and it was a medical appointment
+  esCitaMedica Boolean @default(false)
+  horas        Float?  // hours to subtract from horasMedicasUsadas
+
+  empleado   Empleado @relation(fields: [empleadoId], references: [id])
+  empleadoId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([empleadoId, fecha]) // one entry per employee per day
+  @@map("eventos")
 }
