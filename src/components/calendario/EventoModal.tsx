@@ -5,13 +5,13 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Badge from "@/components/ui/Badge";
 
-type TipoEventoValor = "VACACION" | "AUSENCIA" | "NOTA";
-type OrigenVacacionValor = "ANIO_ANTERIOR" | "ANIO_ACTUAL";
-type TipoHorasValor = "MEDICA" | "EXCESO";
+export type TipoEventoValor = "VACACION" | "AUSENCIA" | "NOTA";
+export type OrigenVacacionValor = "ANIO_ANTERIOR" | "ANIO_ACTUAL";
+export type TipoHorasValor = "MEDICA" | "EXCESO";
 
 // The full shape staff sees from the API — richer than calendario-celda's
 // EventoCalendario, which only carries what's needed to color a cell.
-type EventoCompleto = {
+export type EventoCompleto = {
   id: string;
   fecha: string;
   tipo: TipoEventoValor;

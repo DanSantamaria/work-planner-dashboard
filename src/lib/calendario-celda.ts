@@ -13,12 +13,12 @@ export type FeriadoCalendario = {
   nombre: string;
 };
 
-export type CeldaInfo =
+export type CeldaInfo<E extends EventoCalendario = EventoCalendario> =
   | { tipo: "feriado"; etiqueta: string }
   | { tipo: "finDeSemana" }
   | {
       tipo: "evento";
-      evento: EventoCalendario;
+      evento: E;
       variant: "vacacion" | "vacacionAnterior" | "ausente" | "nota";
     }
   | { tipo: "normal" };
@@ -37,12 +37,12 @@ export function esFinDeSemana(fecha: Date): boolean {
  * weekend take priority over any Evento, since the whole office is closed
  * on those days regardless of what's recorded for an individual employee.
  */
-export function resolverCelda(
+export function resolverCelda<E extends EventoCalendario>(
   fecha: Date,
   empleadoId: string,
-  eventos: EventoCalendario[],
+  eventos: E[],
   feriados: FeriadoCalendario[]
-): CeldaInfo {
+): CeldaInfo<E> {
   const feriado = feriados.find((f) => mismaFecha(new Date(f.fecha), fecha));
   if (feriado) {
     return { tipo: "feriado", etiqueta: feriado.nombre };

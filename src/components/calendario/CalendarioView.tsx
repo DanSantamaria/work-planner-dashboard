@@ -3,11 +3,14 @@
 import { useEffect, useState } from "react";
 import { getMonday, addDays } from "@/lib/date-utils";
 import { useBusqueda } from "@/context/BusquedaContext";
-import type { EventoCalendario, FeriadoCalendario } from "@/lib/calendario-celda";
+import { resolverCelda } from "@/lib/calendario-celda";
+import type { FeriadoCalendario } from "@/lib/calendario-celda";
 import Button from "@/components/ui/Button";
 import DayView from "@/components/calendario/DayView";
 import WeekGrid from "@/components/calendario/WeekGrid";
 import MonthGrid from "@/components/calendario/MonthGrid";
+import EventoModal, { type EventoCompleto } from "@/components/calendario/EventoModal";
+import FeriadoForm, { type Feriado } from "@/components/calendario/FeriadoForm";
 
 type Modo = "DIARIO" | "SEMANAL" | "MENSUAL" | "MULTI_MES";
 
@@ -65,8 +68,15 @@ function avanzar(modo: Modo, fecha: Date, direccion: 1 | -1): Date {
   );
 }
 
+// NOT fecha.toISOString().slice(0, 10) — that converts to UTC, which
+// silently shifts the date back a day for anyone east of UTC (e.g. Spain).
+// These Date objects are built from local calendar components (getMonday,
+// addDays, new Date(y, m, d)), so they must be read back the same way.
 function formatoFecha(fecha: Date): string {
-  return fecha.toISOString().slice(0, 10);
+  const anio = fecha.getFullYear();
+  const mes = String(fecha.getMonth() + 1).padStart(2, "0");
+  const dia = String(fecha.getDate()).padStart(2, "0");
+  return `${anio}-${mes}-${dia}`;
 }
 
 export default function CalendarioView({ empleados, isStaff }: Props) {
@@ -75,9 +85,21 @@ export default function CalendarioView({ empleados, isStaff }: Props) {
   const [fecha, setFecha] = useState(new Date());
   const [datos, setDatos] = useState<{
     rango: string;
-    eventos: EventoCalendario[];
+    eventos: EventoCompleto[];
     feriados: FeriadoCalendario[];
   } | null>(null);
+  const [refrescoContador, setRefrescoContador] = useState(0);
+
+  const [modalEventoAbierto, setModalEventoAbierto] = useState(false);
+  const [eventoEnEdicion, setEventoEnEdicion] = useState<EventoCompleto | null>(null);
+  const [prellenadoEvento, setPrellenadoEvento] = useState<{
+    empleadoId: string;
+    fecha: string;
+  } | null>(null);
+
+  const [modalFeriadoAbierto, setModalFeriadoAbierto] = useState(false);
+  const [feriadoEnEdicion, setFeriadoEnEdicion] = useState<Feriado | null>(null);
+  const [prellenadoFeriado, setPrellenadoFeriado] = useState<string | null>(null);
 
   const { desde, hasta } = calcularRango(modo, fecha);
   const desdeStr = formatoFecha(desde);
@@ -108,7 +130,7 @@ export default function CalendarioView({ empleados, isStaff }: Props) {
     return () => {
       cancelado = true;
     };
-  }, [desdeStr, hastaStr]);
+  }, [desdeStr, hastaStr, refrescoContador]);
 
   const empleadosFiltrados = empleados.filter((empleado) =>
     empleado.nombre.toLowerCase().includes(busqueda.toLowerCase())
@@ -124,6 +146,53 @@ export default function CalendarioView({ empleados, isStaff }: Props) {
 
   function irSiguiente() {
     setFecha((prev) => avanzar(modo, prev, 1));
+  }
+
+  function handleGuardado() {
+    setRefrescoContador((n) => n + 1);
+  }
+
+  function handleNuevoEvento() {
+    setEventoEnEdicion(null);
+    setPrellenadoEvento(null);
+    setModalEventoAbierto(true);
+  }
+
+  function handleNuevoFeriado() {
+    setFeriadoEnEdicion(null);
+    setPrellenadoFeriado(null);
+    setModalFeriadoAbierto(true);
+  }
+
+  function handleDiaClick(empleadoId: string, diaFecha: Date) {
+    const celda = resolverCelda(diaFecha, empleadoId, eventos, feriados);
+    const fechaStr = formatoFecha(diaFecha);
+
+    if (celda.tipo === "feriado") {
+      const feriado = feriados.find(
+        (f) => formatoFecha(new Date(f.fecha)) === fechaStr
+      );
+      if (!feriado) return;
+      setFeriadoEnEdicion(feriado);
+      setPrellenadoFeriado(null);
+      setModalFeriadoAbierto(true);
+      return;
+    }
+
+    if (celda.tipo === "finDeSemana") {
+      return;
+    }
+
+    if (celda.tipo === "evento") {
+      setEventoEnEdicion(celda.evento);
+      setPrellenadoEvento(null);
+      setModalEventoAbierto(true);
+      return;
+    }
+
+    setEventoEnEdicion(null);
+    setPrellenadoEvento({ empleadoId, fecha: fechaStr });
+    setModalEventoAbierto(true);
   }
 
   return (
@@ -153,6 +222,17 @@ export default function CalendarioView({ empleados, isStaff }: Props) {
             </Button>
           ))}
         </div>
+
+        {isStaff && (
+          <div className="flex gap-2">
+            <Button variant="primary" size="sm" onClick={handleNuevoEvento}>
+              + Evento
+            </Button>
+            <Button variant="secondary" size="sm" onClick={handleNuevoFeriado}>
+              + Feriado
+            </Button>
+          </div>
+        )}
       </div>
 
       {cargando ? (
@@ -164,6 +244,7 @@ export default function CalendarioView({ empleados, isStaff }: Props) {
           eventos={eventos}
           feriados={feriados}
           isStaff={isStaff}
+          onDiaClick={isStaff ? handleDiaClick : undefined}
         />
       ) : modo === "SEMANAL" ? (
         <WeekGrid
@@ -172,6 +253,7 @@ export default function CalendarioView({ empleados, isStaff }: Props) {
           eventos={eventos}
           feriados={feriados}
           isStaff={isStaff}
+          onDiaClick={isStaff ? handleDiaClick : undefined}
         />
       ) : modo === "MENSUAL" ? (
         <MonthGrid
@@ -180,6 +262,7 @@ export default function CalendarioView({ empleados, isStaff }: Props) {
           eventos={eventos}
           feriados={feriados}
           isStaff={isStaff}
+          onDiaClick={isStaff ? handleDiaClick : undefined}
         />
       ) : (
         <div className="flex gap-6 overflow-x-auto">
@@ -193,11 +276,39 @@ export default function CalendarioView({ empleados, isStaff }: Props) {
                   eventos={eventos}
                   feriados={feriados}
                   isStaff={isStaff}
+                  onDiaClick={isStaff ? handleDiaClick : undefined}
                 />
               </div>
             );
           })}
         </div>
+      )}
+
+      {isStaff && (
+        <>
+          <EventoModal
+            key={
+              eventoEnEdicion?.id ??
+              (prellenadoEvento
+                ? `evento-${prellenadoEvento.empleadoId}_${prellenadoEvento.fecha}`
+                : "evento-nuevo")
+            }
+            open={modalEventoAbierto}
+            onClose={() => setModalEventoAbierto(false)}
+            empleados={empleados}
+            eventoExistente={eventoEnEdicion}
+            prellenado={prellenadoEvento}
+            onGuardado={handleGuardado}
+          />
+          <FeriadoForm
+            key={feriadoEnEdicion?.id ?? prellenadoFeriado ?? "feriado-nuevo"}
+            open={modalFeriadoAbierto}
+            onClose={() => setModalFeriadoAbierto(false)}
+            feriadoExistente={feriadoEnEdicion}
+            fechaPrellenada={prellenadoFeriado}
+            onGuardado={handleGuardado}
+          />
+        </>
       )}
     </div>
   );
