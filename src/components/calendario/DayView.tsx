@@ -2,6 +2,7 @@
 
 import { resolverCelda } from "@/lib/calendario-celda";
 import type { EventoCalendario, FeriadoCalendario } from "@/lib/calendario-celda";
+import { getLobColorClass } from "@/lib/lob-color";
 import CeldaCalendario from "@/components/calendario/CeldaCalendario";
 import {
   Table,
@@ -12,7 +13,7 @@ import {
   TableCell,
 } from "@/components/ui/Table";
 
-type Empleado = { id: string; nombre: string };
+type Empleado = { id: string; nombre: string; lob: string };
 
 type Props = {
   fecha: Date;
@@ -43,7 +44,7 @@ export default function DayView({
 
           return (
             <TableRow key={empleado.id} index={index}>
-              <TableCell>
+              <TableCell className={getLobColorClass(empleado.lob)}>
                 <span className="text-gray-800 font-medium">
                   {empleado.nombre}
                 </span>

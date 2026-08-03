@@ -3,6 +3,7 @@
 import { getMonday, addDays } from "@/lib/date-utils";
 import { resolverCelda } from "@/lib/calendario-celda";
 import type { EventoCalendario, FeriadoCalendario } from "@/lib/calendario-celda";
+import { getLobColorClass } from "@/lib/lob-color";
 import CeldaCalendario from "@/components/calendario/CeldaCalendario";
 
 const DAY_NAMES = [
@@ -19,7 +20,7 @@ function esHoy(date: Date): boolean {
   return date.toDateString() === new Date().toDateString();
 }
 
-type Empleado = { id: string; nombre: string };
+type Empleado = { id: string; nombre: string; lob: string };
 
 type Props = {
   fecha: Date; // any date within the desired week
@@ -74,7 +75,9 @@ export default function WeekGrid({
         <tbody>
           {empleados.map((empleado) => (
             <tr key={empleado.id} className="bg-white">
-              <td className="sticky left-0 z-10 border border-gray-300 bg-white px-4 py-2 font-semibold text-gray-700">
+              <td
+                className={`sticky left-0 z-10 border border-gray-300 px-4 py-2 font-semibold text-gray-700 ${getLobColorClass(empleado.lob)}`}
+              >
                 {empleado.nombre}
               </td>
               {dias.map((dia) => {

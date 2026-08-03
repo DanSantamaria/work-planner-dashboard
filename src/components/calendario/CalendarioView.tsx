@@ -23,7 +23,7 @@ const ETIQUETAS_MODO: Record<Modo, string> = {
   MULTI_MES: "3 meses",
 };
 
-type Empleado = { id: string; nombre: string };
+type Empleado = { id: string; nombre: string; lob: string };
 
 type Props = {
   empleados: Empleado[];

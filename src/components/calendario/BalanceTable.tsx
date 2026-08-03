@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useBusqueda } from "@/context/BusquedaContext";
+import { agruparPorGrupo } from "@/lib/orden-empleados";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import {
@@ -16,6 +17,11 @@ import {
 type Empleado = {
   id: string;
   nombre: string;
+  lob: string;
+  horario: string;
+  grupoId: string | null;
+  ordenEnGrupo: number;
+  grupo?: { orden: number; nombre: string } | null;
   diasVacaciones: number;
   diasVacacionesUsados: number;
   horasExceso: number;
@@ -159,10 +165,15 @@ export default function BalanceTable({ initialEmpleados, isStaff }: Props) {
     }
 
     setEmpleados((prev) =>
-      prev.map((emp) => (emp.id === edicion.empleadoId ? data : emp))
+      prev.map((emp) => (emp.id === edicion.empleadoId ? { ...emp, ...data } : emp))
     );
     setEdicion(null);
   }
+
+  const empleadosFiltrados = empleados.filter((empleado) =>
+    empleado.nombre.toLowerCase().includes(busqueda.toLowerCase())
+  );
+  const grupos = agruparPorGrupo(empleadosFiltrados);
 
   return (
     <div>
@@ -174,93 +185,100 @@ export default function BalanceTable({ initialEmpleados, isStaff }: Props) {
 
       <Table>
         <TableHead>
+          <TableHeaderCell className="w-12">#</TableHeaderCell>
           <TableHeaderCell>Empleado</TableHeaderCell>
           <TableHeaderCell>Vacaciones (días)</TableHeaderCell>
           <TableHeaderCell>Horas exceso</TableHeaderCell>
           <TableHeaderCell>Horas médicas</TableHeaderCell>
         </TableHead>
         <TableBody>
-          {empleados
-            .filter((empleado) =>
-              empleado.nombre.toLowerCase().includes(busqueda.toLowerCase())
-            )
-            .map((empleado, index) => (
-            <TableRow key={empleado.id} index={index}>
-              <TableCell>
-                <span className="text-gray-800 font-medium">
-                  {empleado.nombre}
-                </span>
-              </TableCell>
-              <TableCell>
-                <BalanceCelda
-                  total={empleado.diasVacaciones}
-                  usado={empleado.diasVacacionesUsados}
-                  editable={isStaff}
-                  editando={
-                    edicion?.empleadoId === empleado.id &&
-                    edicion.campo === "diasVacaciones"
-                  }
-                  valorEdicion={valorEdicion}
-                  guardando={guardando}
-                  onEmpezarEdicion={() =>
-                    empezarEdicion(
-                      empleado.id,
-                      "diasVacaciones",
-                      empleado.diasVacaciones
-                    )
-                  }
-                  onCambiarValor={setValorEdicion}
-                  onGuardar={guardarEdicion}
-                  onCancelar={cancelarEdicion}
-                />
-              </TableCell>
-              <TableCell>
-                <BalanceCelda
-                  total={empleado.horasExceso}
-                  usado={empleado.horasExcesoUsadas}
-                  editable={isStaff}
-                  editando={
-                    edicion?.empleadoId === empleado.id &&
-                    edicion.campo === "horasExceso"
-                  }
-                  valorEdicion={valorEdicion}
-                  guardando={guardando}
-                  onEmpezarEdicion={() =>
-                    empezarEdicion(
-                      empleado.id,
-                      "horasExceso",
-                      empleado.horasExceso
-                    )
-                  }
-                  onCambiarValor={setValorEdicion}
-                  onGuardar={guardarEdicion}
-                  onCancelar={cancelarEdicion}
-                />
-              </TableCell>
-              <TableCell>
-                <BalanceCelda
-                  total={empleado.horasMedicasTotal}
-                  usado={empleado.horasMedicasUsadas}
-                  editable={isStaff}
-                  editando={
-                    edicion?.empleadoId === empleado.id &&
-                    edicion.campo === "horasMedicasTotal"
-                  }
-                  valorEdicion={valorEdicion}
-                  guardando={guardando}
-                  onEmpezarEdicion={() =>
-                    empezarEdicion(
-                      empleado.id,
-                      "horasMedicasTotal",
-                      empleado.horasMedicasTotal
-                    )
-                  }
-                  onCambiarValor={setValorEdicion}
-                  onGuardar={guardarEdicion}
-                  onCancelar={cancelarEdicion}
-                />
-              </TableCell>
-            </TableRow>
+          {grupos.map((grupo) => (
+            <Fragment key={grupo.grupoId ?? "sin-grupo"}>
+              <tr className="bg-sidebar text-white">
+                <TableCell colSpan={5} className="font-bold border-gray-300">
+                  {grupo.nombreGrupo}
+                </TableCell>
+              </tr>
+              {grupo.empleados.map((empleado, index) => (
+                <TableRow key={empleado.id} index={index}>
+                  <TableCell className="text-gray-500">{index + 1}</TableCell>
+                  <TableCell>
+                    <span className="text-gray-800 font-medium">
+                      {empleado.nombre}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <BalanceCelda
+                      total={empleado.diasVacaciones}
+                      usado={empleado.diasVacacionesUsados}
+                      editable={isStaff}
+                      editando={
+                        edicion?.empleadoId === empleado.id &&
+                        edicion.campo === "diasVacaciones"
+                      }
+                      valorEdicion={valorEdicion}
+                      guardando={guardando}
+                      onEmpezarEdicion={() =>
+                        empezarEdicion(
+                          empleado.id,
+                          "diasVacaciones",
+                          empleado.diasVacaciones
+                        )
+                      }
+                      onCambiarValor={setValorEdicion}
+                      onGuardar={guardarEdicion}
+                      onCancelar={cancelarEdicion}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <BalanceCelda
+                      total={empleado.horasExceso}
+                      usado={empleado.horasExcesoUsadas}
+                      editable={isStaff}
+                      editando={
+                        edicion?.empleadoId === empleado.id &&
+                        edicion.campo === "horasExceso"
+                      }
+                      valorEdicion={valorEdicion}
+                      guardando={guardando}
+                      onEmpezarEdicion={() =>
+                        empezarEdicion(
+                          empleado.id,
+                          "horasExceso",
+                          empleado.horasExceso
+                        )
+                      }
+                      onCambiarValor={setValorEdicion}
+                      onGuardar={guardarEdicion}
+                      onCancelar={cancelarEdicion}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <BalanceCelda
+                      total={empleado.horasMedicasTotal}
+                      usado={empleado.horasMedicasUsadas}
+                      editable={isStaff}
+                      editando={
+                        edicion?.empleadoId === empleado.id &&
+                        edicion.campo === "horasMedicasTotal"
+                      }
+                      valorEdicion={valorEdicion}
+                      guardando={guardando}
+                      onEmpezarEdicion={() =>
+                        empezarEdicion(
+                          empleado.id,
+                          "horasMedicasTotal",
+                          empleado.horasMedicasTotal
+                        )
+                      }
+                      onCambiarValor={setValorEdicion}
+                      onGuardar={guardarEdicion}
+                      onCancelar={cancelarEdicion}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </Fragment>
           ))}
         </TableBody>
       </Table>

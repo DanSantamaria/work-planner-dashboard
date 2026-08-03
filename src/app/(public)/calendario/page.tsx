@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { ordenarEmpleados } from "@/lib/orden-empleados";
 import BalanceTable from "@/components/calendario/BalanceTable";
 import Leyenda from "@/components/calendario/Leyenda";
 import CalendarioView from "@/components/calendario/CalendarioView";
@@ -9,16 +10,16 @@ export default async function CalendarioPage() {
   const role = session?.user?.role;
   const isStaff = role === "ADMIN" || role === "SUPERVISOR";
 
-  const empleados = await prisma.empleado.findMany({
+  const empleadosSinOrdenar = await prisma.empleado.findMany({
     where: { activo: true },
-    orderBy: [
-      { grupo: { orden: "asc" } },
-      { ordenEnGrupo: "asc" },
-      { nombre: "asc" },
-    ],
     select: {
       id: true,
       nombre: true,
+      lob: true,
+      horario: true,
+      grupoId: true,
+      ordenEnGrupo: true,
+      grupo: { select: { id: true, nombre: true, orden: true } },
       diasVacaciones: true,
       diasVacacionesUsados: true,
       horasExceso: true,
@@ -27,6 +28,8 @@ export default async function CalendarioPage() {
       horasMedicasUsadas: true,
     },
   });
+
+  const empleados = ordenarEmpleados(empleadosSinOrdenar);
 
   return (
     <div>
