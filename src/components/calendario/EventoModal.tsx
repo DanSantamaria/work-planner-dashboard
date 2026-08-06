@@ -39,9 +39,9 @@ const TIPO_OPTIONS: {
   etiqueta: string;
   variant: "vacacion" | "ausente" | "nota";
 }[] = [
-  { valor: "VACACION", etiqueta: "Vacación", variant: "vacacion" },
+  { valor: "VACACION", etiqueta: "Vacaciones", variant: "vacacion" },
   { valor: "AUSENCIA", etiqueta: "Ausencia", variant: "ausente" },
-  { valor: "NOTA", etiqueta: "Nota", variant: "nota" },
+  { valor: "NOTA", etiqueta: "Incidencia", variant: "nota" },
 ];
 
 const JUSTIFICADA_OPTIONS: { valor: boolean | null; etiqueta: string }[] = [

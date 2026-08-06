@@ -8,10 +8,10 @@ type VarianteColor = "feriado" | "vacacion" | "vacacionAnterior" | "ausente" | "
 
 const ETIQUETAS: Record<VarianteColor, string> = {
   feriado: "Feriado",
-  vacacion: "Vacación",
-  vacacionAnterior: "Vacación (año ant.)",
+  vacacion: "Vacaciones",
+  vacacionAnterior: "Vacaciones (año ant.)",
   ausente: "Ausencia",
-  nota: "Nota",
+  nota: "Incidencia",
 };
 
 const DOT_CLASSES: Record<VarianteColor, string> = {
