@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Calendar1, CalendarPlus, ChevronDown } from "lucide-react";
+import { Calendar1, CalendarPlus, ChevronDown, Funnel } from "lucide-react";
 import { getMonday, addDays } from "@/lib/date-utils";
 import { useBusqueda } from "@/context/BusquedaContext";
 import { useClickOutside } from "@/hooks/useClickOutside";
@@ -13,6 +13,7 @@ import WeekGrid from "@/components/calendario/WeekGrid";
 import MonthGrid from "@/components/calendario/MonthGrid";
 import EventoModal, { type EventoCompleto } from "@/components/calendario/EventoModal";
 import FeriadoForm, { type Feriado } from "@/components/calendario/FeriadoForm";
+import SelectorFecha from "@/components/calendario/SelectorFecha";
 
 type Modo = "DIARIO" | "SEMANAL" | "MENSUAL";
 
@@ -129,6 +130,10 @@ export default function CalendarioView({ empleados, isStaff }: Props) {
   const menuNuevoRef = useRef<HTMLDivElement>(null);
   useClickOutside(menuNuevoRef, () => setMenuNuevoAbierto(false));
 
+  const [selectorFechaAbierto, setSelectorFechaAbierto] = useState(false);
+  const selectorFechaRef = useRef<HTMLDivElement>(null);
+  useClickOutside(selectorFechaRef, () => setSelectorFechaAbierto(false));
+
   const { desde, hasta } = calcularRango(modo, fecha);
   const desdeStr = formatoFecha(desde);
   const hastaStr = formatoFecha(hasta);
@@ -174,6 +179,13 @@ export default function CalendarioView({ empleados, isStaff }: Props) {
 
   function irSiguiente() {
     setFecha((prev) => avanzar(modo, prev, 1));
+  }
+
+  // Only picks the date — deliberately does NOT close the popover, so you
+  // can pick a day, then still browse to a different month/year and pick
+  // again, closing only via useClickOutside when you're actually done.
+  function handleSeleccionarFecha(nuevaFecha: Date) {
+    setFecha(nuevaFecha);
   }
 
   function handleGuardado() {
@@ -251,6 +263,25 @@ export default function CalendarioView({ empleados, isStaff }: Props) {
             >
               ▶
             </Button>
+            <div ref={selectorFechaRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setSelectorFechaAbierto((prev) => !prev)}
+                className="cursor-pointer text-sidebar hover:opacity-70"
+                aria-label="Ir a una fecha"
+              >
+                <Funnel size={18} />
+              </button>
+              {selectorFechaAbierto && (
+                <div className="absolute left-0 z-30 mt-1">
+                  <SelectorFecha
+                    fecha={fecha}
+                    modo={modo}
+                    onSeleccionar={handleSeleccionarFecha}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
