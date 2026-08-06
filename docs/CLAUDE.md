@@ -1,6 +1,6 @@
 # Work Planner Dashboard
 
-An internal Spanish-language operations tool for planning weekly employee task assignments (who's doing what task, on which day, in which line of business). Built with Next.js (App Router) + React, Prisma ORM against Neon Postgres, NextAuth v5 (JWT credentials login) for auth, and Tailwind CSS for styling, deployed on Vercel. The weekly planning grid (`/semana`), employee management (`/empleados`), task catalog (`/tareas`), and user management (`/usuarios`) are built and in production use; the calendar view (`/calendario`) and the app's root `/` route are still placeholders/unbuilt.
+An internal Spanish-language operations tool for planning weekly employee task assignments (who's doing what task, on which day, in which line of business). Built with Next.js (App Router) + React, Prisma ORM against Neon Postgres, NextAuth v5 (JWT credentials login) for auth, and Tailwind CSS for styling, deployed on Vercel. The weekly planning grid (`/semana`), employee management (`/empleados`), task catalog (`/tareas`), user management (`/usuarios`), and the calendar view (`/calendario` — feriados, vacaciones, ausencias, notas, and per-employee balances) are built and in production use; the app's root `/` route is still a placeholder/unbuilt.
 
 ## Docs On-Demand
 

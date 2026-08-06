@@ -13,7 +13,7 @@ work-planner-dashboard/
 │   │   ├── (public)/           # Route group: authenticated app shell (Sidebar + Header via layout.tsx)
 │   │   │   ├── layout.tsx      # Wraps children in Sidebar/Header/BusquedaProvider
 │   │   │   ├── semana/         # "/semana" — weekly task planning grid
-│   │   │   ├── calendario/     # "/calendario" — placeholder, not yet built
+│   │   │   ├── calendario/     # "/calendario" — feriados, vacaciones, ausencias, notas, balances
 │   │   │   ├── empleados/      # "/empleados" — employee management (ADMIN/SUPERVISOR)
 │   │   │   ├── tareas/         # "/tareas" — task catalog management (ADMIN/SUPERVISOR)
 │   │   │   └── usuarios/       # "/usuarios" — user/account management (ADMIN only)

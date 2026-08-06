@@ -9,7 +9,7 @@ _Living doc — update the route map and layout notes as pages are built out. Lo
 | `/` | `src/app/page.tsx` | Public | Placeholder — still create-next-app boilerplate |
 | `/login` | `src/app/login/page.tsx` | Public | Built |
 | `/semana` | `src/app/(public)/semana/page.tsx` | Logged in | Built — weekly task planning grid |
-| `/calendario` | `src/app/(public)/calendario/page.tsx` | Logged in | Placeholder — not yet built |
+| `/calendario` | `src/app/(public)/calendario/page.tsx` | Public (edit gated to ADMIN/SUPERVISOR) | Built — feriados, vacaciones, ausencias, notas, and balances |
 | `/empleados` | `src/app/(public)/empleados/page.tsx` | Logged in | Built |
 | `/tareas` | `src/app/(public)/tareas/page.tsx` | Logged in | Built |
 | `/usuarios` | `src/app/(public)/usuarios/page.tsx` | ADMIN only | Built |
