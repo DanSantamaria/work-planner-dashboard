@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Calendar1 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Calendar1, CalendarPlus, ChevronDown } from "lucide-react";
 import { getMonday, addDays } from "@/lib/date-utils";
 import { useBusqueda } from "@/context/BusquedaContext";
+import { useClickOutside } from "@/hooks/useClickOutside";
 import { resolverCelda } from "@/lib/calendario-celda";
 import type { FeriadoCalendario } from "@/lib/calendario-celda";
 import Button from "@/components/ui/Button";
@@ -123,6 +124,10 @@ export default function CalendarioView({ empleados, isStaff }: Props) {
   const [modalFeriadoAbierto, setModalFeriadoAbierto] = useState(false);
   const [feriadoEnEdicion, setFeriadoEnEdicion] = useState<Feriado | null>(null);
   const [prellenadoFeriado, setPrellenadoFeriado] = useState<string | null>(null);
+
+  const [menuNuevoAbierto, setMenuNuevoAbierto] = useState(false);
+  const menuNuevoRef = useRef<HTMLDivElement>(null);
+  useClickOutside(menuNuevoRef, () => setMenuNuevoAbierto(false));
 
   const { desde, hasta } = calcularRango(modo, fecha);
   const desdeStr = formatoFecha(desde);
@@ -263,13 +268,42 @@ export default function CalendarioView({ empleados, isStaff }: Props) {
         </div>
 
         {isStaff && (
-          <div className="flex gap-2">
-            <Button variant="primary" size="sm" onClick={handleNuevoEvento}>
-              + Evento
+          <div ref={menuNuevoRef} className="relative">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setMenuNuevoAbierto((prev) => !prev)}
+              className="rounded-lg !bg-sidebar px-4 py-2 text-white hover:opacity-90"
+            >
+              <CalendarPlus size={18} />
+              Evento
+              <span className="mx-1 h-5 w-px bg-white/30" />
+              <ChevronDown size={16} />
             </Button>
-            <Button variant="secondary" size="sm" onClick={handleNuevoFeriado}>
-              + Feriado
-            </Button>
+            {menuNuevoAbierto && (
+              <div className="absolute right-0 z-30 mt-1 w-36 rounded-lg border border-gray-200 bg-white p-1 shadow-lg">
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleNuevoEvento();
+                    setMenuNuevoAbierto(false);
+                  }}
+                  className="block w-full cursor-pointer rounded px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                >
+                  Evento
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleNuevoFeriado();
+                    setMenuNuevoAbierto(false);
+                  }}
+                  className="block w-full cursor-pointer rounded px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                >
+                  Feriado
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
