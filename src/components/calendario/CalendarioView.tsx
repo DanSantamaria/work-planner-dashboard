@@ -204,29 +204,31 @@ export default function CalendarioView({ empleados, isStaff }: Props) {
     setModalFeriadoAbierto(true);
   }
 
+  // Interim click-routing using the old two-modal setup — cerrado/evento
+  // can now both be true at once (checkpoint 1's point), but the tabbed
+  // Evento/Feriado modal that actually resolves which one a click should
+  // open is checkpoint 2/3, not built yet. This keeps the file compiling
+  // against the new CeldaInfo shape with equivalent-to-before behavior in
+  // the meantime.
   function handleDiaClick(empleadoId: string, diaFecha: Date) {
     const celda = resolverCelda(diaFecha, empleadoId, eventos, feriados);
     const fechaStr = formatoFecha(diaFecha);
 
-    if (celda.tipo === "feriado") {
-      const feriado = feriados.find(
-        (f) => formatoFecha(new Date(f.fecha)) === fechaStr
-      );
-      if (!feriado) return;
-      setFeriadoEnEdicion(feriado);
+    if (celda.evento) {
+      setEventoEnEdicion(celda.evento.data);
+      setPrellenadoEvento(null);
+      setModalEventoAbierto(true);
+      return;
+    }
+
+    if (celda.feriado) {
+      setFeriadoEnEdicion(celda.feriado);
       setPrellenadoFeriado(null);
       setModalFeriadoAbierto(true);
       return;
     }
 
-    if (celda.tipo === "finDeSemana") {
-      return;
-    }
-
-    if (celda.tipo === "evento") {
-      setEventoEnEdicion(celda.evento);
-      setPrellenadoEvento(null);
-      setModalEventoAbierto(true);
+    if (celda.finDeSemana) {
       return;
     }
 

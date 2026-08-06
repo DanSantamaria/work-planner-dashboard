@@ -89,7 +89,9 @@ export default function MonthGrid({
                   return (
                     <td
                       key={dia.toISOString()}
-                      className="border border-gray-300 p-0.5 text-center align-middle"
+                      className={`border border-gray-300 p-0.5 text-center align-middle ${
+                        celda.cerrado ? "bg-feriado-bg" : ""
+                      }`}
                     >
                       <CeldaCalendario
                         celda={celda}

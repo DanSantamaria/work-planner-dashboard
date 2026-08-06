@@ -91,7 +91,9 @@ export default function WeekGrid({
                 return (
                   <td
                     key={dia.fecha.toISOString()}
-                    className="border border-gray-300 px-2 py-1 align-top"
+                    className={`border border-gray-300 px-2 py-1 align-top ${
+                      celda.cerrado ? "bg-feriado-bg" : ""
+                    }`}
                   >
                     <CeldaCalendario
                       celda={celda}

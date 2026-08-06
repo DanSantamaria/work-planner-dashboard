@@ -49,7 +49,7 @@ export default function DayView({
                   {empleado.nombre}
                 </span>
               </TableCell>
-              <TableCell>
+              <TableCell className={celda.cerrado ? "bg-feriado-bg" : ""}>
                 <CeldaCalendario
                   celda={celda}
                   onClick={
