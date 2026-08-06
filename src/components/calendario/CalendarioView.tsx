@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Calendar1 } from "lucide-react";
 import { getMonday, addDays } from "@/lib/date-utils";
 import { useBusqueda } from "@/context/BusquedaContext";
 import { resolverCelda } from "@/lib/calendario-celda";
@@ -12,15 +13,12 @@ import MonthGrid from "@/components/calendario/MonthGrid";
 import EventoModal, { type EventoCompleto } from "@/components/calendario/EventoModal";
 import FeriadoForm, { type Feriado } from "@/components/calendario/FeriadoForm";
 
-type Modo = "DIARIO" | "SEMANAL" | "MENSUAL" | "MULTI_MES";
-
-const MESES_MULTI_MES = 3;
+type Modo = "DIARIO" | "SEMANAL" | "MENSUAL";
 
 const ETIQUETAS_MODO: Record<Modo, string> = {
   DIARIO: "Día",
   SEMANAL: "Semana",
   MENSUAL: "Mes",
-  MULTI_MES: "3 meses",
 };
 
 type Empleado = { id: string; nombre: string; lob: string };
@@ -40,32 +38,15 @@ function calcularRango(modo: Modo, fecha: Date): { desde: Date; hasta: Date } {
     return { desde: inicio, hasta: addDays(inicio, 6) };
   }
 
-  if (modo === "MENSUAL") {
-    const inicio = new Date(fecha.getFullYear(), fecha.getMonth(), 1);
-    const fin = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0);
-    return { desde: inicio, hasta: fin };
-  }
-
   const inicio = new Date(fecha.getFullYear(), fecha.getMonth(), 1);
-  const fin = new Date(
-    fecha.getFullYear(),
-    fecha.getMonth() + MESES_MULTI_MES,
-    0
-  );
+  const fin = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0);
   return { desde: inicio, hasta: fin };
 }
 
 function avanzar(modo: Modo, fecha: Date, direccion: 1 | -1): Date {
   if (modo === "DIARIO") return addDays(fecha, direccion);
   if (modo === "SEMANAL") return addDays(fecha, direccion * 7);
-  if (modo === "MENSUAL") {
-    return new Date(fecha.getFullYear(), fecha.getMonth() + direccion, 1);
-  }
-  return new Date(
-    fecha.getFullYear(),
-    fecha.getMonth() + direccion * MESES_MULTI_MES,
-    1
-  );
+  return new Date(fecha.getFullYear(), fecha.getMonth() + direccion, 1);
 }
 
 // NOT fecha.toISOString().slice(0, 10) — that converts to UTC, which
@@ -77,6 +58,48 @@ function formatoFecha(fecha: Date): string {
   const mes = String(fecha.getMonth() + 1).padStart(2, "0");
   const dia = String(fecha.getDate()).padStart(2, "0");
   return `${anio}-${mes}-${dia}`;
+}
+
+const NOMBRES_MES = [
+  "Enero",
+  "Febrero",
+  "Marzo",
+  "Abril",
+  "Mayo",
+  "Junio",
+  "Julio",
+  "Agosto",
+  "Septiembre",
+  "Octubre",
+  "Noviembre",
+  "Diciembre",
+];
+
+// The human-readable label between the ← → arrows — not the same string as
+// formatoFecha above, which builds an API query param, not display text.
+function formatearRangoVisible(modo: Modo, fecha: Date): string {
+  if (modo === "DIARIO") {
+    return `${fecha.getDate()} ${NOMBRES_MES[fecha.getMonth()]}, ${fecha.getFullYear()}`;
+  }
+
+  if (modo === "SEMANAL") {
+    const inicio = getMonday(fecha);
+    const fin = addDays(inicio, 6);
+    const mismoAnio = inicio.getFullYear() === fin.getFullYear();
+    const mismoMes = mismoAnio && inicio.getMonth() === fin.getMonth();
+
+    if (mismoMes) {
+      return `${inicio.getDate()}-${fin.getDate()} ${NOMBRES_MES[inicio.getMonth()]}, ${inicio.getFullYear()}`;
+    }
+
+    if (mismoAnio) {
+      return `${inicio.getDate()} ${NOMBRES_MES[inicio.getMonth()]} - ${fin.getDate()} ${NOMBRES_MES[fin.getMonth()]}, ${inicio.getFullYear()}`;
+    }
+
+    return `${inicio.getDate()} ${NOMBRES_MES[inicio.getMonth()]}, ${inicio.getFullYear()} - ${fin.getDate()} ${NOMBRES_MES[fin.getMonth()]}, ${fin.getFullYear()}`;
+  }
+
+  return `${NOMBRES_MES[fecha.getMonth()]}, ${fecha.getFullYear()}`;
 }
 
 export default function CalendarioView({ empleados, isStaff }: Props) {
@@ -198,16 +221,32 @@ export default function CalendarioView({ empleados, isStaff }: Props) {
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Button variant="secondary" size="sm" onClick={irAnterior}>
-            ←
-          </Button>
-          <Button variant="ghost" size="sm" onClick={irAHoy}>
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="lg" onClick={irAHoy}>
+            <Calendar1 size={22} />
             Hoy
           </Button>
-          <Button variant="secondary" size="sm" onClick={irSiguiente}>
-            →
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="lg"
+              onClick={irAnterior}
+              className="text-lg font-bold text-accent"
+            >
+              ◀
+            </Button>
+            <span className="text-md font-bold text-accent">
+              {formatearRangoVisible(modo, fecha)}
+            </span>
+            <Button
+              variant="ghost"
+              size="lg"
+              onClick={irSiguiente}
+              className="text-lg font-bold text-accent"
+            >
+              ▶
+            </Button>
+          </div>
         </div>
 
         <div className="flex gap-2">
@@ -255,7 +294,7 @@ export default function CalendarioView({ empleados, isStaff }: Props) {
           isStaff={isStaff}
           onDiaClick={isStaff ? handleDiaClick : undefined}
         />
-      ) : modo === "MENSUAL" ? (
+      ) : (
         <MonthGrid
           fecha={fecha}
           empleados={empleadosFiltrados}
@@ -264,24 +303,6 @@ export default function CalendarioView({ empleados, isStaff }: Props) {
           isStaff={isStaff}
           onDiaClick={isStaff ? handleDiaClick : undefined}
         />
-      ) : (
-        <div className="flex gap-6 overflow-x-auto">
-          {Array.from({ length: MESES_MULTI_MES }, (_, i) => {
-            const mesFecha = new Date(fecha.getFullYear(), fecha.getMonth() + i, 1);
-            return (
-              <div key={i} className="min-w-[320px] flex-1">
-                <MonthGrid
-                  fecha={mesFecha}
-                  empleados={empleadosFiltrados}
-                  eventos={eventos}
-                  feriados={feriados}
-                  isStaff={isStaff}
-                  onDiaClick={isStaff ? handleDiaClick : undefined}
-                />
-              </div>
-            );
-          })}
-        </div>
       )}
 
       {isStaff && (
