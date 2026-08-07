@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Calendar1, CalendarPlus, ChevronDown, Funnel } from "lucide-react";
+import {
+  Calendar1,
+  CalendarPlus,
+  ChevronDown,
+  ChevronUp,
+  Funnel,
+  LayoutGrid,
+} from "lucide-react";
 import { getMonday, addDays } from "@/lib/date-utils";
 import { useBusqueda } from "@/context/BusquedaContext";
 import { useClickOutside } from "@/hooks/useClickOutside";
@@ -15,6 +22,7 @@ import type { EventoCompleto } from "@/components/calendario/EventoModal";
 import type { Feriado } from "@/components/calendario/FeriadoForm";
 import EventoFeriadoModal, { type Tab } from "@/components/calendario/EventoFeriadoModal";
 import SelectorFecha from "@/components/calendario/SelectorFecha";
+import BalanceTable, { type Empleado } from "@/components/calendario/BalanceTable";
 
 type Modo = "DIARIO" | "SEMANAL" | "MENSUAL";
 
@@ -23,8 +31,6 @@ const ETIQUETAS_MODO: Record<Modo, string> = {
   SEMANAL: "Semana",
   MENSUAL: "Mes",
 };
-
-type Empleado = { id: string; nombre: string; lob: string };
 
 type Props = {
   empleados: Empleado[];
@@ -135,6 +141,10 @@ export default function CalendarioView({ empleados, isStaff }: Props) {
   const [menuNuevoAbierto, setMenuNuevoAbierto] = useState(false);
   const menuNuevoRef = useRef<HTMLDivElement>(null);
   useClickOutside(menuNuevoRef, () => setMenuNuevoAbierto(false));
+
+  // Collapsed by default, matching the mockup — instant show/hide, no
+  // animation, same simplicity level as the modal/popover patterns above.
+  const [balanceAbierto, setBalanceAbierto] = useState(false);
 
   const [selectorFechaAbierto, setSelectorFechaAbierto] = useState(false);
   const selectorFechaRef = useRef<HTMLDivElement>(null);
@@ -291,45 +301,79 @@ export default function CalendarioView({ empleados, isStaff }: Props) {
           ))}
         </div>
 
-        {isStaff && (
-          <div ref={menuNuevoRef} className="relative">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setMenuNuevoAbierto((prev) => !prev)}
-              className="rounded-lg !bg-sidebar px-4 py-2 text-white hover:opacity-90"
-            >
-              <CalendarPlus size={18} />
-              Evento
-              <span className="mx-1 h-5 w-px bg-white/30" />
+        <div className="flex items-center gap-2">
+          {isStaff && (
+            <div ref={menuNuevoRef} className="relative">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setMenuNuevoAbierto((prev) => !prev)}
+                className="rounded-lg !bg-sidebar px-4 py-2 text-white hover:opacity-90"
+              >
+                <CalendarPlus size={18} />
+                Evento
+                <span className="mx-1 h-5 w-px bg-white/30" />
+                <ChevronDown size={16} />
+              </Button>
+              {menuNuevoAbierto && (
+                <div className="absolute right-0 z-30 mt-1 w-36 rounded-lg border border-gray-200 bg-white p-1 shadow-lg">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleNuevo("EVENTO");
+                      setMenuNuevoAbierto(false);
+                    }}
+                    className="block w-full cursor-pointer rounded px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    Evento
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleNuevo("FERIADO");
+                      setMenuNuevoAbierto(false);
+                    }}
+                    className="block w-full cursor-pointer rounded px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    Feriado
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => setBalanceAbierto((prev) => !prev)}
+            className="!h-9 !px-4 !py-2"
+          >
+            <LayoutGrid size={18} />
+            Grupos y Totales
+            {balanceAbierto ? (
+              <ChevronUp size={16} />
+            ) : (
               <ChevronDown size={16} />
-            </Button>
-            {menuNuevoAbierto && (
-              <div className="absolute right-0 z-30 mt-1 w-36 rounded-lg border border-gray-200 bg-white p-1 shadow-lg">
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleNuevo("EVENTO");
-                    setMenuNuevoAbierto(false);
-                  }}
-                  className="block w-full cursor-pointer rounded px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
-                >
-                  Evento
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleNuevo("FERIADO");
-                    setMenuNuevoAbierto(false);
-                  }}
-                  className="block w-full cursor-pointer rounded px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
-                >
-                  Feriado
-                </button>
-              </div>
             )}
+          </Button>
+        </div>
+      </div>
+
+      {/* grid-rows-[0fr]→[1fr] instead of height:auto — CSS can't
+          transition to/from auto, but it can transition a fr track, so
+          the inner overflow-hidden wrapper's content clips smoothly
+          instead of snapping open/closed. BalanceTable stays mounted at
+          all times (never conditionally rendered) since this animation
+          needs the DOM to persist across the transition. */}
+      <div
+        className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${
+          balanceAbierto ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+        }`}
+      >
+        <div className="overflow-hidden">
+          <div className="mb-6">
+            <BalanceTable initialEmpleados={empleados} isStaff={isStaff} />
           </div>
-        )}
+        </div>
       </div>
 
       {cargando ? (

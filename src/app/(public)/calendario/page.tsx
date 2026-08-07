@@ -1,7 +1,6 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { ordenarEmpleados } from "@/lib/orden-empleados";
-import BalanceTable from "@/components/calendario/BalanceTable";
 import CalendarioView from "@/components/calendario/CalendarioView";
 
 export default async function CalendarioPage() {
@@ -33,10 +32,7 @@ export default async function CalendarioPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-800 mb-6">Calendario</h1>
-      <div className="mb-8">
-        <CalendarioView empleados={empleados} isStaff={isStaff} />
-      </div>
-      <BalanceTable initialEmpleados={empleados} isStaff={isStaff} />
+      <CalendarioView empleados={empleados} isStaff={isStaff} />
     </div>
   );
 }

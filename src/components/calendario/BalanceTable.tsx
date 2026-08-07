@@ -14,7 +14,7 @@ import {
   TableCell,
 } from "@/components/ui/Table";
 
-type Empleado = {
+export type Empleado = {
   id: string;
   nombre: string;
   lob: string;
