@@ -218,27 +218,36 @@ client child instead.
 
 ## Self-check before considering this done
 
-- [ ] Every place a user reads "Nota" now reads "Incidencia"; nothing in
+- [x] Every place a user reads "Nota" now reads "Incidencia"; nothing in
       `schema.prisma` or the API code changed
-- [ ] The Incidencia badge/dot renders blue, matching the mockup, from a
+- [x] The Incidencia badge/dot renders blue, matching the mockup, from a
       single token change
-- [ ] Header shows a date-range label between the prev/next arrows, for
+- [x] Header shows a date-range label between the prev/next arrows, for
       Día/Semana/Mes only — "3 meses" is gone from the mode switcher and
       from `CalendarioView.tsx`'s code
-- [ ] "+ Evento" and "+ Feriado" are reachable from one button
-- [ ] Clicking the date-range label opens the two-panel picker; picking a
-      day or month jumps the calendar to it and closes the popover;
-      "Today" jumps back to today
-- [ ] Weekends and feriados render plain gray with no visible label and
+- [x] "+ Evento" and "+ Feriado" are reachable from one button
+- [x] Clicking the funnel icon opens the two-panel picker (not the date
+      label itself — changed during Step 4 to stay honest about what's
+      clickable); picking a day or month jumps the calendar to it without
+      closing the popover, so multiple picks/browsing can happen in one
+      session; closes only via outside-click; "Today" jumps back to today
+- [x] Weekends and feriados render plain gray with no visible label and
       no hover tooltip
-- [ ] An employee who works a weekend/feriado can still get a personal
+- [x] An employee who works a weekend/feriado can still get a personal
       Vacación/Ausencia/Incidencia added by clicking their cell on that
-      day — confirm this against however the open question got resolved
-- [ ] Day view's badge fills the cell; Week/Month keep the small-pill style
-- [ ] Balance table is hidden by default and appears when "Grupos y
+      day — resolved via the tabbed Evento/Feriado modal
+- [x] Day view's badge fills the cell; Week/Month keep the small-pill style
+- [x] Balance table is hidden by default and appears when "Grupos y
       Totales" is clicked
-- [ ] Month view still shows dots (should need zero changes from this
-      plan's steps — confirms nothing here accidentally broke it)
+- [x] Month view still shows dots (needed zero changes from this plan's
+      steps — confirms nothing here accidentally broke it)
+
+Also done beyond the original scope, driven by follow-up requests during
+implementation: extracted a shared `GridTable` header component used by
+all 4 grids plus `/semana` (3rd-repetition rule); replaced the Nombre
+column's full-cell LOB background with a left accent bar; search on
+`/calendario` now matches event type (Vacaciones/Ausencia/Incidencia) in
+addition to employee name.
 
 ## How to test
 

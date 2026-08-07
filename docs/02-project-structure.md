@@ -32,7 +32,7 @@ work-planner-dashboard/
 │   │   ├── Sidebar.tsx / Header.tsx   # App shell chrome
 │   │   ├── semana/              # Feature components for the weekly grid (SemanaGrid, TareaDropdown, ...)
 │   │   ├── empleados/ tareas/ usuarios/  # Feature components (tables) per page
-│   │   └── ui/                  # Layer-2 shared UI primitives (Badge, Button, Card, Input, Table)
+│   │   └── ui/                  # Layer-2 shared UI primitives (Badge, Button, Card, Input, Table, GridTable)
 │   ├── context/                 # React context providers (BusquedaContext — global search state)
 │   ├── generated/prisma/        # Prisma Client output (generated, gitignored — never edit by hand)
 │   ├── hooks/                   # Shared React hooks (useClickOutside)
