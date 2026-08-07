@@ -7,13 +7,24 @@ import CeldaCalendario, {
   CELDA_BG_CLASSES,
 } from "@/components/calendario/CeldaCalendario";
 import {
-  Table,
-  TableHead,
-  TableHeaderCell,
-  TableBody,
-  TableRow,
-  TableCell,
-} from "@/components/ui/Table";
+  GridTable,
+  NombreHeaderCell,
+  DiaHeaderCell,
+} from "@/components/ui/GridTable";
+
+const DAY_NAMES = [
+  "Domingo",
+  "Lunes",
+  "Martes",
+  "Miércoles",
+  "Jueves",
+  "Viernes",
+  "Sábado",
+];
+
+function esHoy(date: Date): boolean {
+  return date.toDateString() === new Date().toDateString();
+}
 
 type Empleado = { id: string; nombre: string; lob: string };
 
@@ -35,30 +46,36 @@ export default function DayView({
   onDiaClick,
 }: Props) {
   return (
-    <Table>
-      <TableHead>
-        <TableHeaderCell>Empleado</TableHeaderCell>
-        <TableHeaderCell>Estado</TableHeaderCell>
-      </TableHead>
-      <TableBody>
-        {empleados.map((empleado, index) => {
+    <GridTable>
+      <thead>
+        <tr>
+          <NombreHeaderCell>Nombre</NombreHeaderCell>
+          <DiaHeaderCell
+            numero={fecha.getDate()}
+            nombreDia={DAY_NAMES[fecha.getDay()]}
+            hoy={esHoy(fecha)}
+          />
+        </tr>
+      </thead>
+      <tbody>
+        {empleados.map((empleado) => {
           const celda = resolverCelda(fecha, empleado.id, eventos, feriados);
 
           return (
-            <TableRow key={empleado.id} index={index}>
-              <TableCell className={getLobColorClass(empleado.lob)}>
-                <span className="text-gray-800 font-medium">
-                  {empleado.nombre}
-                </span>
-              </TableCell>
-              <TableCell
-                className={
+            <tr key={empleado.id} className="bg-white">
+              <td
+                className={`sticky left-0 z-10 border border-gray-300 px-4 py-2 font-semibold text-gray-700 ${getLobColorClass(empleado.lob)}`}
+              >
+                {empleado.nombre}
+              </td>
+              <td
+                className={`border border-gray-300 px-2 py-1 align-top ${
                   celda.evento
                     ? CELDA_BG_CLASSES[celda.evento.variant]
                     : celda.cerrado
                       ? "bg-feriado-bg"
                       : ""
-                }
+                }`}
               >
                 <CeldaCalendario
                   celda={celda}
@@ -68,11 +85,11 @@ export default function DayView({
                       : undefined
                   }
                 />
-              </TableCell>
-            </TableRow>
+              </td>
+            </tr>
           );
         })}
-      </TableBody>
-    </Table>
+      </tbody>
+    </GridTable>
   );
 }

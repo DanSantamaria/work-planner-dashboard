@@ -4,6 +4,11 @@ import { useRef, useState } from "react";
 import { addDays } from "@/lib/date-utils";
 import TareaDropdown from "@/components/semana/TareaDropdown";
 import Badge from "@/components/ui/Badge";
+import {
+  GridTable,
+  NombreHeaderCell,
+  DiaHeaderCell,
+} from "@/components/ui/GridTable";
 
 const DAY_NAMES = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
 
@@ -131,101 +136,87 @@ export default function SemanaGrid({
   const contenedorTablaRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div ref={contenedorTablaRef} className="overflow-x-auto overflow-y-hidden rounded-2xl">
-      <table className="w-full border-collapse text-sm">
-        <thead>
-          <tr>
-            <th className="sticky left-0 z-20 w-48 border border-gray-300 bg-table-header px-4 py-3 text-left text-lg text-gray-800">
-              Nombre
-            </th>
-            <th className="sticky left-48 z-20 w-32 border border-gray-300 bg-table-header px-4 py-3 text-left text-lg text-gray-800">
-              Horario
-            </th>
-            {weekDays.map((day) => {
-              const hoy = esHoy(day.date);
+    <GridTable ref={contenedorTablaRef}>
+      <thead>
+        <tr>
+          <NombreHeaderCell>Nombre</NombreHeaderCell>
+          <NombreHeaderCell anchoClase="w-32" stickyLeftClase="left-48">
+            Horario
+          </NombreHeaderCell>
+          {weekDays.map((day) => (
+            <DiaHeaderCell
+              key={day.diaSemana}
+              numero={day.dayNumber}
+              nombreDia={day.dayName}
+              hoy={esHoy(day.date)}
+              numeroClase="text-3xl"
+            />
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {empleados.map((empleado) => {
+          return (
+            <tr key={empleado.id} className="bg-white">
+              <td
+                className={`border border-gray-300 px-2 font-semibold text-gray-700 ${getLobColorClass(empleado.lob)}`}
+              >
+                {editable ? (
+                  <CeldaEditable
+                    valor={empleado.nombre}
+                    onSave={(nuevo) => onNombreChange?.(empleado.id, nuevo)}
+                  />
+                ) : (
+                  empleado.nombre
+                )}
+              </td>
+              <td className="sticky left-48 z-10 w-32 border border-gray-300 bg-white px-4 py-2 text-gray-600">
+                {editable ? (
+                  <CeldaEditable
+                    valor={empleado.horario}
+                    onSave={(nuevo) => onHorarioChange?.(empleado.id, nuevo)}
+                  />
+                ) : (
+                  empleado.horario
+                )}
+              </td>
+              {weekDays.map((day) => {
+                const asignacionesCelda = tareas[empleado.id]?.[day.diaSemana] ?? [];
+                const claseAcento = getCeldaAccentClass(asignacionesCelda);
 
-              return (
-                <th
-                  key={day.diaSemana}
-                  className={`whitespace-nowrap border border-gray-300 bg-table-header px-4 py-3 text-center text-gray-800 ${
-                    hoy ? "border-t-4 border-t-sidebar" : ""
-                  }`}
-                >
-                  <div className="flex flex-col items-center">
-                    <span className="text-3xl font-bold">{day.dayNumber}</span>
-                    <span className="text-xs font-normal text-gray-600">
-                      {day.dayName}
-                    </span>
-                  </div>
-                </th>
-              );
-            })}
-          </tr>
-        </thead>
-        <tbody>
-          {empleados.map((empleado) => {
-            return (
-              <tr key={empleado.id} className="bg-white">
-                <td
-                  className={`border border-gray-300 px-2 font-semibold text-gray-700 ${getLobColorClass(empleado.lob)}`}
-                >
-                  {editable ? (
-                    <CeldaEditable
-                      valor={empleado.nombre}
-                      onSave={(nuevo) => onNombreChange?.(empleado.id, nuevo)}
-                    />
-                  ) : (
-                    empleado.nombre
-                  )}
-                </td>
-                <td className="sticky left-48 z-10 w-32 border border-gray-300 bg-white px-4 py-2 text-gray-600">
-                  {editable ? (
-                    <CeldaEditable
-                      valor={empleado.horario}
-                      onSave={(nuevo) => onHorarioChange?.(empleado.id, nuevo)}
-                    />
-                  ) : (
-                    empleado.horario
-                  )}
-                </td>
-                {weekDays.map((day) => {
-                  const asignacionesCelda = tareas[empleado.id]?.[day.diaSemana] ?? [];
-                  const claseAcento = getCeldaAccentClass(asignacionesCelda);
-
-                  return (
-                    <td
-                      key={day.diaSemana}
-                      className={`border border-gray-300 px-4 py-2 align-top text-gray-700 ${claseAcento}`}>
-                      {editable ? (
-                        <TareaDropdown
-                          tareasDisponibles={tareasDisponibles}
-                          seleccionadas={asignacionesCelda.map((a) => a.tareaId)}
-                          onChange={(nuevasIds) =>
-                            onTareasChange?.(empleado.id, day.diaSemana, nuevasIds)
-                          }
-                          contenedorTablaRef={contenedorTablaRef}
-                        />
-                      ) : (
-                        <div className="flex max-w-[220px] flex-wrap gap-1">
-                          {asignacionesCelda.map((asignacion) => (
-                            <Badge
-                              key={asignacion.tareaId}
-                              variant={getPillVariant(asignacion.nombre)}
-                              bold={esPillBold(asignacion.nombre)}
-                            >
-                              {asignacion.nombre}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-                    </td>
-                  );
-                })}
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+                return (
+                  <td
+                    key={day.diaSemana}
+                    className={`border border-gray-300 px-4 py-2 align-top text-gray-700 ${claseAcento}`}>
+                    {editable ? (
+                      <TareaDropdown
+                        tareasDisponibles={tareasDisponibles}
+                        seleccionadas={asignacionesCelda.map((a) => a.tareaId)}
+                        onChange={(nuevasIds) =>
+                          onTareasChange?.(empleado.id, day.diaSemana, nuevasIds)
+                        }
+                        contenedorTablaRef={contenedorTablaRef}
+                      />
+                    ) : (
+                      <div className="flex max-w-[220px] flex-wrap gap-1">
+                        {asignacionesCelda.map((asignacion) => (
+                          <Badge
+                            key={asignacion.tareaId}
+                            variant={getPillVariant(asignacion.nombre)}
+                            bold={esPillBold(asignacion.nombre)}
+                          >
+                            {asignacion.nombre}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </td>
+                );
+              })}
+            </tr>
+          );
+        })}
+      </tbody>
+    </GridTable>
   );
 }

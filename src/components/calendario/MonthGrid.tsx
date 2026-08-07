@@ -5,6 +5,11 @@ import { resolverCelda } from "@/lib/calendario-celda";
 import type { EventoCalendario, FeriadoCalendario } from "@/lib/calendario-celda";
 import { getLobColorClass } from "@/lib/lob-color";
 import CeldaCalendario from "@/components/calendario/CeldaCalendario";
+import {
+  GridTable,
+  NombreHeaderCell,
+  DiaHeaderCell,
+} from "@/components/ui/GridTable";
 
 const NOMBRES_MES = [
   "Enero",
@@ -51,65 +56,66 @@ export default function MonthGrid({
       <h2 className="mb-2 text-lg font-semibold text-gray-800">
         {NOMBRES_MES[fecha.getMonth()]} {fecha.getFullYear()}
       </h2>
-      <div className="overflow-x-auto overflow-y-hidden rounded-2xl">
-        <table className="w-full border-collapse text-xs">
-          <thead>
-            <tr>
-              <th className="sticky left-0 z-20 w-36 border border-gray-300 bg-table-header px-3 py-2 text-left text-gray-800">
-                Nombre
-              </th>
-              {dias.map((dia) => (
-                <th
-                  key={dia.toISOString()}
-                  className={`w-9 border border-gray-300 bg-table-header px-1 py-2 text-center text-gray-800 ${
-                    esHoy(dia) ? "border-t-4 border-t-sidebar" : ""
-                  }`}
-                >
-                  {dia.getDate()}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {empleados.map((empleado) => (
-              <tr key={empleado.id} className="bg-white">
-                <td
-                  className={`sticky left-0 z-10 border border-gray-300 px-3 py-1 font-semibold text-gray-700 ${getLobColorClass(empleado.lob)}`}
-                >
-                  {empleado.nombre}
-                </td>
-                {dias.map((dia) => {
-                  const celda = resolverCelda(
-                    dia,
-                    empleado.id,
-                    eventos,
-                    feriados
-                  );
-
-                  return (
-                    <td
-                      key={dia.toISOString()}
-                      className={`border border-gray-300 p-0.5 text-center align-middle ${
-                        celda.cerrado ? "bg-feriado-bg" : ""
-                      }`}
-                    >
-                      <CeldaCalendario
-                        celda={celda}
-                        onClick={
-                          isStaff
-                            ? () => onDiaClick?.(empleado.id, dia)
-                            : undefined
-                        }
-                        compact
-                      />
-                    </td>
-                  );
-                })}
-              </tr>
+      <GridTable textoClase="text-xs">
+        <thead>
+          <tr>
+            <NombreHeaderCell
+              anchoClase="w-36"
+              paddingClase="px-3 py-2"
+              textoClase=""
+            >
+              Nombre
+            </NombreHeaderCell>
+            {dias.map((dia) => (
+              <DiaHeaderCell
+                key={dia.toISOString()}
+                numero={dia.getDate()}
+                hoy={esHoy(dia)}
+                anchoClase="w-9"
+                paddingClase="px-1 py-2"
+              />
             ))}
-          </tbody>
-        </table>
-      </div>
+          </tr>
+        </thead>
+        <tbody>
+          {empleados.map((empleado) => (
+            <tr key={empleado.id} className="bg-white">
+              <td
+                className={`sticky left-0 z-10 border border-gray-300 px-3 py-1 font-semibold text-gray-700 ${getLobColorClass(empleado.lob)}`}
+              >
+                {empleado.nombre}
+              </td>
+              {dias.map((dia) => {
+                const celda = resolverCelda(
+                  dia,
+                  empleado.id,
+                  eventos,
+                  feriados
+                );
+
+                return (
+                  <td
+                    key={dia.toISOString()}
+                    className={`border border-gray-300 p-0.5 text-center align-middle ${
+                      celda.cerrado ? "bg-feriado-bg" : ""
+                    }`}
+                  >
+                    <CeldaCalendario
+                      celda={celda}
+                      onClick={
+                        isStaff
+                          ? () => onDiaClick?.(empleado.id, dia)
+                          : undefined
+                      }
+                      compact
+                    />
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </GridTable>
     </div>
   );
 }
