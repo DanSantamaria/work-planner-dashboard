@@ -3,7 +3,7 @@
 import { getDiasDelMes } from "@/lib/date-utils";
 import { resolverCelda } from "@/lib/calendario-celda";
 import type { EventoCalendario, FeriadoCalendario } from "@/lib/calendario-celda";
-import { getLobColorClass } from "@/lib/lob-color";
+import { getLobBorderClass } from "@/lib/lob-color";
 import CeldaCalendario from "@/components/calendario/CeldaCalendario";
 import {
   GridTable,
@@ -60,7 +60,7 @@ export default function MonthGrid({
         <thead>
           <tr>
             <NombreHeaderCell
-              anchoClase="w-36"
+              anchoClase="w-44"
               paddingClase="px-3 py-2"
               textoClase=""
             >
@@ -81,7 +81,7 @@ export default function MonthGrid({
           {empleados.map((empleado) => (
             <tr key={empleado.id} className="bg-white">
               <td
-                className={`sticky left-0 z-10 border border-gray-300 px-3 py-1 font-semibold text-gray-700 ${getLobColorClass(empleado.lob)}`}
+                className={`sticky left-0 z-10 border border-gray-300 bg-white pl-7 pr-3 py-1 font-semibold text-gray-700 ${getLobBorderClass(empleado.lob)}`}
               >
                 {empleado.nombre}
               </td>

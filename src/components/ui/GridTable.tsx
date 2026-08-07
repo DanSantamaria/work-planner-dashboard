@@ -11,14 +11,14 @@ import { forwardRef, type ReactNode } from "react";
 // needing its own redundant outer div just to hold the ref.
 export const GridTable = forwardRef<
   HTMLDivElement,
-  { children: ReactNode; textoClase?: string }
->(function GridTable({ children, textoClase = "text-sm" }, ref) {
+  { children: ReactNode; textoClase?: string; layoutClase?: string }
+>(function GridTable({ children, textoClase = "text-sm", layoutClase = "" }, ref) {
   return (
     <div
       ref={ref}
       className="overflow-x-auto overflow-y-hidden rounded-2xl"
     >
-      <table className={`w-full border-collapse ${textoClase}`}>
+      <table className={`w-full border-collapse ${textoClase} ${layoutClase}`}>
         {children}
       </table>
     </div>

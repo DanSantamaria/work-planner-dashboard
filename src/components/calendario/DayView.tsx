@@ -2,7 +2,7 @@
 
 import { resolverCelda } from "@/lib/calendario-celda";
 import type { EventoCalendario, FeriadoCalendario } from "@/lib/calendario-celda";
-import { getLobColorClass } from "@/lib/lob-color";
+import { getLobBorderClass } from "@/lib/lob-color";
 import CeldaCalendario, {
   CELDA_BG_CLASSES,
 } from "@/components/calendario/CeldaCalendario";
@@ -49,7 +49,7 @@ export default function DayView({
     <GridTable>
       <thead>
         <tr>
-          <NombreHeaderCell>Nombre</NombreHeaderCell>
+          <NombreHeaderCell anchoClase="w-56">Nombre</NombreHeaderCell>
           <DiaHeaderCell
             numero={fecha.getDate()}
             nombreDia={DAY_NAMES[fecha.getDay()]}
@@ -64,7 +64,7 @@ export default function DayView({
           return (
             <tr key={empleado.id} className="bg-white">
               <td
-                className={`sticky left-0 z-10 border border-gray-300 px-4 py-2 font-semibold text-gray-700 ${getLobColorClass(empleado.lob)}`}
+                className={`sticky left-0 z-10 border border-gray-300 bg-white pl-8 pr-4 py-2 font-semibold text-gray-700 ${getLobBorderClass(empleado.lob)}`}
               >
                 {empleado.nombre}
               </td>

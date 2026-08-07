@@ -3,7 +3,7 @@
 import { getMonday, addDays } from "@/lib/date-utils";
 import { resolverCelda } from "@/lib/calendario-celda";
 import type { EventoCalendario, FeriadoCalendario } from "@/lib/calendario-celda";
-import { getLobColorClass } from "@/lib/lob-color";
+import { getLobBorderClass } from "@/lib/lob-color";
 import CeldaCalendario from "@/components/calendario/CeldaCalendario";
 import {
   GridTable,
@@ -54,7 +54,7 @@ export default function WeekGrid({
     <GridTable>
       <thead>
         <tr>
-          <NombreHeaderCell>Nombre</NombreHeaderCell>
+          <NombreHeaderCell anchoClase="w-56">Nombre</NombreHeaderCell>
           {dias.map((dia) => (
             <DiaHeaderCell
               key={dia.fecha.toISOString()}
@@ -69,7 +69,7 @@ export default function WeekGrid({
         {empleados.map((empleado) => (
           <tr key={empleado.id} className="bg-white">
             <td
-              className={`sticky left-0 z-10 border border-gray-300 px-4 py-2 font-semibold text-gray-700 ${getLobColorClass(empleado.lob)}`}
+              className={`sticky left-0 z-10 border border-gray-300 bg-white pl-8 pr-4 py-2 font-semibold text-gray-700 ${getLobBorderClass(empleado.lob)}`}
             >
               {empleado.nombre}
             </td>

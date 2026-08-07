@@ -9,6 +9,7 @@ import {
   NombreHeaderCell,
   DiaHeaderCell,
 } from "@/components/ui/GridTable";
+import { getLobBorderClass } from "@/lib/lob-color";
 
 const DAY_NAMES = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
 
@@ -45,13 +46,6 @@ function getCeldaAccentClass(asignaciones: AsignacionCelda[]): string {
   if (nombres.includes("AUSENTE")) return "border-l-8 border-l-ausente-bg";
   if (nombres.includes("OFICINA")) return "border-l-8 border-l-oficina-bg";
   return "";
-}
-
-function getLobColorClass(lob: string): string {
-  if (lob === "ESPAÑA") return "bg-lob-espana";
-  if (lob === "FRANCIA") return "bg-lob-francia";
-  if (lob === "IRLANDA") return "bg-lob-irlanda";
-  return "bg-lob-coordinacion";
 }
 
 function CeldaEditable({
@@ -136,11 +130,11 @@ export default function SemanaGrid({
   const contenedorTablaRef = useRef<HTMLDivElement>(null);
 
   return (
-    <GridTable ref={contenedorTablaRef}>
+    <GridTable ref={contenedorTablaRef} layoutClase="table-fixed">
       <thead>
         <tr>
-          <NombreHeaderCell>Nombre</NombreHeaderCell>
-          <NombreHeaderCell anchoClase="w-32" stickyLeftClase="left-48">
+          <NombreHeaderCell anchoClase="w-56">Nombre</NombreHeaderCell>
+          <NombreHeaderCell anchoClase="w-32" stickyLeftClase="left-56">
             Horario
           </NombreHeaderCell>
           {weekDays.map((day) => (
@@ -159,7 +153,7 @@ export default function SemanaGrid({
           return (
             <tr key={empleado.id} className="bg-white">
               <td
-                className={`border border-gray-300 px-2 font-semibold text-gray-700 ${getLobColorClass(empleado.lob)}`}
+                className={`w-56 border border-gray-300 bg-white pl-6 pr-2 font-semibold text-gray-700 ${getLobBorderClass(empleado.lob)}`}
               >
                 {editable ? (
                   <CeldaEditable
@@ -170,7 +164,7 @@ export default function SemanaGrid({
                   empleado.nombre
                 )}
               </td>
-              <td className="sticky left-48 z-10 w-32 border border-gray-300 bg-white px-4 py-2 text-gray-600">
+              <td className="sticky left-56 z-10 w-32 border border-gray-300 bg-white px-4 py-2 text-gray-600">
                 {editable ? (
                   <CeldaEditable
                     valor={empleado.horario}
