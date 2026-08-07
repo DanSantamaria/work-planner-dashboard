@@ -26,7 +26,6 @@ export type EventoCompleto = {
 type Empleado = { id: string; nombre: string };
 
 type Props = {
-  open: boolean;
   onClose: () => void;
   empleados: Empleado[];
   eventoExistente?: EventoCompleto | null;
@@ -50,8 +49,9 @@ const JUSTIFICADA_OPTIONS: { valor: boolean | null; etiqueta: string }[] = [
   { valor: null, etiqueta: "Pendiente" },
 ];
 
+// Content only — no overlay/card shell, no open prop. EventoFeriadoModal
+// owns the shell and decides when this is even mounted at all.
 export default function EventoModal({
-  open,
   onClose,
   empleados,
   eventoExistente,
@@ -92,8 +92,6 @@ export default function EventoModal({
   const [error, setError] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [eliminando, setEliminando] = useState(false);
-
-  if (!open) return null;
 
   function alternarRegistrarHoras(valor: boolean) {
     setRegistrarHoras(valor);
@@ -209,207 +207,205 @@ export default function EventoModal({
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-        <h2 className="text-lg font-bold text-gray-800 mb-4">
-          {modoEdicion ? "Editar evento" : "Nuevo evento"}
-        </h2>
+    <>
+      <h2 className="text-lg font-bold text-gray-800 mb-4">
+        {modoEdicion ? "Editar evento" : "Nuevo evento"}
+      </h2>
 
-        {error && (
-          <div className="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 px-4 py-2 text-sm">
-            {error}
+      {error && (
+        <div className="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 px-4 py-2 text-sm">
+          {error}
+        </div>
+      )}
+
+      <div className="flex flex-col gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Empleado
+          </label>
+          <select
+            disabled={modoEdicion}
+            value={empleadoId}
+            onChange={(e) => setEmpleadoId(e.target.value)}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 disabled:bg-gray-100 disabled:text-gray-400 focus:outline-none focus:ring-2 focus:ring-sidebar"
+          >
+            {empleados.map((emp) => (
+              <option key={emp.id} value={emp.id}>
+                {emp.nombre}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Tipo
+          </label>
+          <div className="flex gap-2">
+            {TIPO_OPTIONS.map((opcion) => (
+              <button
+                key={opcion.valor}
+                type="button"
+                disabled={modoEdicion}
+                onClick={() => setTipo(opcion.valor)}
+                className={`disabled:cursor-not-allowed ${
+                  tipo === opcion.valor ? "" : "opacity-40"
+                }`}
+              >
+                <Badge variant={opcion.variant}>{opcion.etiqueta}</Badge>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {modoEdicion && (
+          <p className="-mt-2 text-xs text-gray-500">
+            Para cambiar el tipo, la fecha o el empleado, elimina este
+            evento y crea uno nuevo.
+          </p>
+        )}
+
+        <div className="flex gap-3">
+          <Input
+            type="date"
+            label="Desde"
+            value={fechaInicio}
+            onChange={(e) => handleFechaInicioChange(e.target.value)}
+            disabled={modoEdicion}
+            wrapperClassName="flex-1"
+          />
+          <Input
+            type="date"
+            label="Hasta"
+            value={fechaFin}
+            onChange={(e) => setFechaFin(e.target.value)}
+            disabled={modoEdicion || (tipo === "NOTA" && registrarHoras)}
+            wrapperClassName="flex-1"
+          />
+        </div>
+
+        {tipo === "VACACION" && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Origen
+            </label>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 text-sm text-gray-700">
+                <input
+                  type="radio"
+                  checked={origenVacacion === "ANIO_ACTUAL"}
+                  onChange={() => setOrigenVacacion("ANIO_ACTUAL")}
+                />
+                Año actual
+              </label>
+              <label className="flex items-center gap-2 text-sm text-gray-700">
+                <input
+                  type="radio"
+                  checked={origenVacacion === "ANIO_ANTERIOR"}
+                  onChange={() => setOrigenVacacion("ANIO_ANTERIOR")}
+                />
+                Año anterior
+              </label>
+            </div>
           </div>
         )}
 
-        <div className="flex flex-col gap-4">
+        {tipo === "AUSENCIA" && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Empleado
-            </label>
-            <select
-              disabled={modoEdicion}
-              value={empleadoId}
-              onChange={(e) => setEmpleadoId(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 disabled:bg-gray-100 disabled:text-gray-400 focus:outline-none focus:ring-2 focus:ring-sidebar"
-            >
-              {empleados.map((emp) => (
-                <option key={emp.id} value={emp.id}>
-                  {emp.nombre}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tipo
+              Justificada
             </label>
             <div className="flex gap-2">
-              {TIPO_OPTIONS.map((opcion) => (
+              {JUSTIFICADA_OPTIONS.map((opcion) => (
                 <button
-                  key={opcion.valor}
+                  key={String(opcion.valor)}
                   type="button"
-                  disabled={modoEdicion}
-                  onClick={() => setTipo(opcion.valor)}
-                  className={`disabled:cursor-not-allowed ${
-                    tipo === opcion.valor ? "" : "opacity-40"
+                  onClick={() => setJustificada(opcion.valor)}
+                  className={`cursor-pointer rounded-lg border px-3 py-1.5 text-sm ${
+                    justificada === opcion.valor
+                      ? "border-sidebar bg-sidebar text-white"
+                      : "border-gray-300 text-gray-600"
                   }`}
                 >
-                  <Badge variant={opcion.variant}>{opcion.etiqueta}</Badge>
+                  {opcion.etiqueta}
                 </button>
               ))}
             </div>
           </div>
+        )}
 
-          {modoEdicion && (
-            <p className="-mt-2 text-xs text-gray-500">
-              Para cambiar el tipo, la fecha o el empleado, elimina este
-              evento y crea uno nuevo.
-            </p>
-          )}
+        {tipo === "NOTA" && (
+          <div className="flex flex-col gap-3">
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={registrarHoras}
+                onChange={(e) => alternarRegistrarHoras(e.target.checked)}
+              />
+              ¿Registrar horas?
+            </label>
 
-          <div className="flex gap-3">
-            <Input
-              type="date"
-              label="Desde"
-              value={fechaInicio}
-              onChange={(e) => handleFechaInicioChange(e.target.value)}
-              disabled={modoEdicion}
-              wrapperClassName="flex-1"
-            />
-            <Input
-              type="date"
-              label="Hasta"
-              value={fechaFin}
-              onChange={(e) => setFechaFin(e.target.value)}
-              disabled={modoEdicion || (tipo === "NOTA" && registrarHoras)}
-              wrapperClassName="flex-1"
-            />
-          </div>
-
-          {tipo === "VACACION" && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Origen
-              </label>
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2 text-sm text-gray-700">
-                  <input
-                    type="radio"
-                    checked={origenVacacion === "ANIO_ACTUAL"}
-                    onChange={() => setOrigenVacacion("ANIO_ACTUAL")}
-                  />
-                  Año actual
-                </label>
-                <label className="flex items-center gap-2 text-sm text-gray-700">
-                  <input
-                    type="radio"
-                    checked={origenVacacion === "ANIO_ANTERIOR"}
-                    onChange={() => setOrigenVacacion("ANIO_ANTERIOR")}
-                  />
-                  Año anterior
-                </label>
-              </div>
-            </div>
-          )}
-
-          {tipo === "AUSENCIA" && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Justificada
-              </label>
-              <div className="flex gap-2">
-                {JUSTIFICADA_OPTIONS.map((opcion) => (
-                  <button
-                    key={String(opcion.valor)}
-                    type="button"
-                    onClick={() => setJustificada(opcion.valor)}
-                    className={`cursor-pointer rounded-lg border px-3 py-1.5 text-sm ${
-                      justificada === opcion.valor
-                        ? "border-sidebar bg-sidebar text-white"
-                        : "border-gray-300 text-gray-600"
-                    }`}
-                  >
-                    {opcion.etiqueta}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {tipo === "NOTA" && (
-            <div className="flex flex-col gap-3">
-              <label className="flex items-center gap-2 text-sm text-gray-700">
-                <input
-                  type="checkbox"
-                  checked={registrarHoras}
-                  onChange={(e) => alternarRegistrarHoras(e.target.checked)}
+            {registrarHoras && (
+              <div className="flex gap-3">
+                <select
+                  value={tipoHoras}
+                  onChange={(e) =>
+                    setTipoHoras(e.target.value as TipoHorasValor)
+                  }
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sidebar"
+                >
+                  <option value="MEDICA">Médica</option>
+                  <option value="EXCESO">Exceso</option>
+                </select>
+                <Input
+                  type="number"
+                  min={0}
+                  step="0.5"
+                  placeholder="Horas"
+                  value={horas}
+                  onChange={(e) => setHoras(e.target.value)}
+                  wrapperClassName="flex-1"
                 />
-                ¿Registrar horas?
-              </label>
-
-              {registrarHoras && (
-                <div className="flex gap-3">
-                  <select
-                    value={tipoHoras}
-                    onChange={(e) =>
-                      setTipoHoras(e.target.value as TipoHorasValor)
-                    }
-                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sidebar"
-                  >
-                    <option value="MEDICA">Médica</option>
-                    <option value="EXCESO">Exceso</option>
-                  </select>
-                  <Input
-                    type="number"
-                    min={0}
-                    step="0.5"
-                    placeholder="Horas"
-                    value={horas}
-                    onChange={(e) => setHoras(e.target.value)}
-                    wrapperClassName="flex-1"
-                  />
-                </div>
-              )}
-            </div>
-          )}
-
-          <Input
-            label="Notas"
-            placeholder="Nota interna (opcional)"
-            value={notas}
-            onChange={(e) => setNotas(e.target.value)}
-          />
-        </div>
-
-        <div className="mt-6 flex items-center justify-between">
-          <div>
-            {modoEdicion && (
-              <Button
-                variant="danger"
-                size="sm"
-                onClick={handleEliminar}
-                loading={eliminando}
-              >
-                Eliminar
-              </Button>
+              </div>
             )}
           </div>
-          <div className="flex gap-3">
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              Cancelar
-            </Button>
+        )}
+
+        <Input
+          label="Notas"
+          placeholder="Nota interna (opcional)"
+          value={notas}
+          onChange={(e) => setNotas(e.target.value)}
+        />
+      </div>
+
+      <div className="mt-6 flex items-center justify-between">
+        <div>
+          {modoEdicion && (
             <Button
-              variant="primary"
+              variant="danger"
               size="sm"
-              onClick={handleGuardar}
-              loading={guardando}
+              onClick={handleEliminar}
+              loading={eliminando}
             >
-              Guardar
+              Eliminar
             </Button>
-          </div>
+          )}
+        </div>
+        <div className="flex gap-3">
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={handleGuardar}
+            loading={guardando}
+          >
+            Guardar
+          </Button>
         </div>
       </div>
-    </div>
+    </>
   );
 }

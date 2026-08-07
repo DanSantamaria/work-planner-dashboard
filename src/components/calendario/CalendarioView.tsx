@@ -11,8 +11,9 @@ import Button from "@/components/ui/Button";
 import DayView from "@/components/calendario/DayView";
 import WeekGrid from "@/components/calendario/WeekGrid";
 import MonthGrid from "@/components/calendario/MonthGrid";
-import EventoModal, { type EventoCompleto } from "@/components/calendario/EventoModal";
-import FeriadoForm, { type Feriado } from "@/components/calendario/FeriadoForm";
+import type { EventoCompleto } from "@/components/calendario/EventoModal";
+import type { Feriado } from "@/components/calendario/FeriadoForm";
+import EventoFeriadoModal, { type Tab } from "@/components/calendario/EventoFeriadoModal";
 import SelectorFecha from "@/components/calendario/SelectorFecha";
 
 type Modo = "DIARIO" | "SEMANAL" | "MENSUAL";
@@ -115,14 +116,19 @@ export default function CalendarioView({ empleados, isStaff }: Props) {
   } | null>(null);
   const [refrescoContador, setRefrescoContador] = useState(0);
 
-  const [modalEventoAbierto, setModalEventoAbierto] = useState(false);
+  // One modal now, not two — conditional rendering ({modalAbierto && ...})
+  // replaces the old open-prop pattern, so a fresh EventoFeriadoModal
+  // instance mounts every time it opens instead of needing a key trick to
+  // force it. tabInicial is just the modal's starting tab, not a lock —
+  // both evento/feriado fill-in state stay available so switching tabs
+  // inside the modal always has sensible data on both sides.
+  const [modalAbierto, setModalAbierto] = useState(false);
+  const [tabInicial, setTabInicial] = useState<Tab>("EVENTO");
   const [eventoEnEdicion, setEventoEnEdicion] = useState<EventoCompleto | null>(null);
   const [prellenadoEvento, setPrellenadoEvento] = useState<{
     empleadoId: string;
     fecha: string;
   } | null>(null);
-
-  const [modalFeriadoAbierto, setModalFeriadoAbierto] = useState(false);
   const [feriadoEnEdicion, setFeriadoEnEdicion] = useState<Feriado | null>(null);
   const [prellenadoFeriado, setPrellenadoFeriado] = useState<string | null>(null);
 
@@ -192,49 +198,34 @@ export default function CalendarioView({ empleados, isStaff }: Props) {
     setRefrescoContador((n) => n + 1);
   }
 
-  function handleNuevoEvento() {
+  // Used by the "+ Evento"/"+ Feriado" dropdown items — both start empty
+  // (create mode), only the starting tab differs.
+  function handleNuevo(tab: Tab) {
     setEventoEnEdicion(null);
     setPrellenadoEvento(null);
-    setModalEventoAbierto(true);
-  }
-
-  function handleNuevoFeriado() {
     setFeriadoEnEdicion(null);
     setPrellenadoFeriado(null);
-    setModalFeriadoAbierto(true);
+    setTabInicial(tab);
+    setModalAbierto(true);
   }
 
-  // Interim click-routing using the old two-modal setup — cerrado/evento
-  // can now both be true at once (checkpoint 1's point), but the tabbed
-  // Evento/Feriado modal that actually resolves which one a click should
-  // open is checkpoint 2/3, not built yet. This keeps the file compiling
-  // against the new CeldaInfo shape with equivalent-to-before behavior in
-  // the meantime.
+  // Both tabs always get sensible data, regardless of which one opens by
+  // default — an existing record on this date/employee means that tab
+  // opens in edit mode; otherwise it's pre-filled to create one. That way
+  // switching tabs inside the modal (e.g. to add a personal event on a
+  // day that's also a feriado) never lands on stale or empty data.
   function handleDiaClick(empleadoId: string, diaFecha: Date) {
     const celda = resolverCelda(diaFecha, empleadoId, eventos, feriados);
     const fechaStr = formatoFecha(diaFecha);
 
-    if (celda.evento) {
-      setEventoEnEdicion(celda.evento.data);
-      setPrellenadoEvento(null);
-      setModalEventoAbierto(true);
-      return;
-    }
+    setEventoEnEdicion(celda.evento?.data ?? null);
+    setPrellenadoEvento(celda.evento ? null : { empleadoId, fecha: fechaStr });
 
-    if (celda.feriado) {
-      setFeriadoEnEdicion(celda.feriado);
-      setPrellenadoFeriado(null);
-      setModalFeriadoAbierto(true);
-      return;
-    }
+    setFeriadoEnEdicion(celda.feriado);
+    setPrellenadoFeriado(celda.feriado ? null : fechaStr);
 
-    if (celda.finDeSemana) {
-      return;
-    }
-
-    setEventoEnEdicion(null);
-    setPrellenadoEvento({ empleadoId, fecha: fechaStr });
-    setModalEventoAbierto(true);
+    setTabInicial(celda.evento ? "EVENTO" : celda.feriado ? "FERIADO" : "EVENTO");
+    setModalAbierto(true);
   }
 
   return (
@@ -318,7 +309,7 @@ export default function CalendarioView({ empleados, isStaff }: Props) {
                 <button
                   type="button"
                   onClick={() => {
-                    handleNuevoEvento();
+                    handleNuevo("EVENTO");
                     setMenuNuevoAbierto(false);
                   }}
                   className="block w-full cursor-pointer rounded px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
@@ -328,7 +319,7 @@ export default function CalendarioView({ empleados, isStaff }: Props) {
                 <button
                   type="button"
                   onClick={() => {
-                    handleNuevoFeriado();
+                    handleNuevo("FERIADO");
                     setMenuNuevoAbierto(false);
                   }}
                   className="block w-full cursor-pointer rounded px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
@@ -372,31 +363,17 @@ export default function CalendarioView({ empleados, isStaff }: Props) {
         />
       )}
 
-      {isStaff && (
-        <>
-          <EventoModal
-            key={
-              eventoEnEdicion?.id ??
-              (prellenadoEvento
-                ? `evento-${prellenadoEvento.empleadoId}_${prellenadoEvento.fecha}`
-                : "evento-nuevo")
-            }
-            open={modalEventoAbierto}
-            onClose={() => setModalEventoAbierto(false)}
-            empleados={empleados}
-            eventoExistente={eventoEnEdicion}
-            prellenado={prellenadoEvento}
-            onGuardado={handleGuardado}
-          />
-          <FeriadoForm
-            key={feriadoEnEdicion?.id ?? prellenadoFeriado ?? "feriado-nuevo"}
-            open={modalFeriadoAbierto}
-            onClose={() => setModalFeriadoAbierto(false)}
-            feriadoExistente={feriadoEnEdicion}
-            fechaPrellenada={prellenadoFeriado}
-            onGuardado={handleGuardado}
-          />
-        </>
+      {isStaff && modalAbierto && (
+        <EventoFeriadoModal
+          tabInicial={tabInicial}
+          onClose={() => setModalAbierto(false)}
+          empleados={empleados}
+          eventoExistente={eventoEnEdicion}
+          prellenadoEvento={prellenadoEvento}
+          feriadoExistente={feriadoEnEdicion}
+          prellenadoFeriado={prellenadoFeriado}
+          onGuardado={handleGuardado}
+        />
       )}
     </div>
   );

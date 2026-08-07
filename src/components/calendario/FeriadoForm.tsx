@@ -7,15 +7,15 @@ import Input from "@/components/ui/Input";
 export type Feriado = { id: string; fecha: string; nombre: string };
 
 type Props = {
-  open: boolean;
   onClose: () => void;
   feriadoExistente?: Feriado | null;
   fechaPrellenada?: string | null;
   onGuardado: () => void;
 };
 
+// Content only — no overlay/card shell, no open prop. EventoFeriadoModal
+// owns the shell and decides when this is even mounted at all.
 export default function FeriadoForm({
-  open,
   onClose,
   feriadoExistente,
   fechaPrellenada,
@@ -30,8 +30,6 @@ export default function FeriadoForm({
   const [error, setError] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [eliminando, setEliminando] = useState(false);
-
-  if (!open) return null;
 
   async function handleGuardar() {
     setError(null);
@@ -96,61 +94,59 @@ export default function FeriadoForm({
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl">
-        <h2 className="text-lg font-bold text-gray-800 mb-4">
-          {modoEdicion ? "Editar feriado" : "Nuevo feriado"}
-        </h2>
+    <>
+      <h2 className="text-lg font-bold text-gray-800 mb-4">
+        {modoEdicion ? "Editar feriado" : "Nuevo feriado"}
+      </h2>
 
-        {error && (
-          <div className="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 px-4 py-2 text-sm">
-            {error}
-          </div>
-        )}
-
-        <div className="flex flex-col gap-4">
-          <Input
-            type="date"
-            label="Fecha"
-            value={fecha}
-            onChange={(e) => setFecha(e.target.value)}
-          />
-          <Input
-            label="Nombre"
-            placeholder="Ej. Fiesta Nacional de España"
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-          />
+      {error && (
+        <div className="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 px-4 py-2 text-sm">
+          {error}
         </div>
+      )}
 
-        <div className="mt-6 flex items-center justify-between">
-          <div>
-            {modoEdicion && (
-              <Button
-                variant="danger"
-                size="sm"
-                onClick={handleEliminar}
-                loading={eliminando}
-              >
-                Eliminar
-              </Button>
-            )}
-          </div>
-          <div className="flex gap-3">
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              Cancelar
-            </Button>
+      <div className="flex flex-col gap-4">
+        <Input
+          type="date"
+          label="Fecha"
+          value={fecha}
+          onChange={(e) => setFecha(e.target.value)}
+        />
+        <Input
+          label="Nombre"
+          placeholder="Ej. Fiesta Nacional de España"
+          value={nombre}
+          onChange={(e) => setNombre(e.target.value)}
+        />
+      </div>
+
+      <div className="mt-6 flex items-center justify-between">
+        <div>
+          {modoEdicion && (
             <Button
-              variant="primary"
+              variant="danger"
               size="sm"
-              onClick={handleGuardar}
-              loading={guardando}
+              onClick={handleEliminar}
+              loading={eliminando}
             >
-              Guardar
+              Eliminar
             </Button>
-          </div>
+          )}
+        </div>
+        <div className="flex gap-3">
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={handleGuardar}
+            loading={guardando}
+          >
+            Guardar
+          </Button>
         </div>
       </div>
-    </div>
+    </>
   );
 }
