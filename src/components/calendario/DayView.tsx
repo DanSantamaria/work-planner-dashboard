@@ -3,7 +3,9 @@
 import { resolverCelda } from "@/lib/calendario-celda";
 import type { EventoCalendario, FeriadoCalendario } from "@/lib/calendario-celda";
 import { getLobColorClass } from "@/lib/lob-color";
-import CeldaCalendario from "@/components/calendario/CeldaCalendario";
+import CeldaCalendario, {
+  CELDA_BG_CLASSES,
+} from "@/components/calendario/CeldaCalendario";
 import {
   Table,
   TableHead,
@@ -49,7 +51,15 @@ export default function DayView({
                   {empleado.nombre}
                 </span>
               </TableCell>
-              <TableCell className={celda.cerrado ? "bg-feriado-bg" : ""}>
+              <TableCell
+                className={
+                  celda.evento
+                    ? CELDA_BG_CLASSES[celda.evento.variant]
+                    : celda.cerrado
+                      ? "bg-feriado-bg"
+                      : ""
+                }
+              >
                 <CeldaCalendario
                   celda={celda}
                   onClick={

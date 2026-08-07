@@ -18,6 +18,16 @@ const DOT_CLASSES: Record<VarianteEvento, string> = {
   nota: "bg-nota-text",
 };
 
+// Used by DayView to tint its own <td> when an employee has a personal
+// event that day — same convention as celda.cerrado's gray, which also
+// lives on the <td>, not in here. Week/Month never read this.
+export const CELDA_BG_CLASSES: Record<VarianteEvento, string> = {
+  vacacion: "bg-vacacion-bg",
+  vacacionAnterior: "bg-vacacion-anterior-bg",
+  ausente: "bg-ausente-bg",
+  nota: "bg-nota-bg",
+};
+
 function Marca({ variant, compact }: { variant: VarianteEvento; compact: boolean }) {
   if (compact) {
     return <span className={`mx-auto block h-3 w-3 rounded-full ${DOT_CLASSES[variant]}`} />;
