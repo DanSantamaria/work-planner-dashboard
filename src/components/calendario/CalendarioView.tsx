@@ -12,8 +12,9 @@ import {
 import { getMonday, addDays } from "@/lib/date-utils";
 import { useBusqueda } from "@/context/BusquedaContext";
 import { useClickOutside } from "@/hooks/useClickOutside";
-import { resolverCelda } from "@/lib/calendario-celda";
+import { resolverCelda, resolverVarianteEvento } from "@/lib/calendario-celda";
 import type { FeriadoCalendario } from "@/lib/calendario-celda";
+import { ETIQUETAS } from "@/components/calendario/CeldaCalendario";
 import Button from "@/components/ui/Button";
 import DayView from "@/components/calendario/DayView";
 import WeekGrid from "@/components/calendario/WeekGrid";
@@ -181,9 +182,23 @@ export default function CalendarioView({ empleados, isStaff }: Props) {
     };
   }, [desdeStr, hastaStr, refrescoContador]);
 
-  const empleadosFiltrados = empleados.filter((empleado) =>
-    empleado.nombre.toLowerCase().includes(busqueda.toLowerCase())
-  );
+  // Same pattern as /semana's "empleado o tarea" search: an employee
+  // stays visible if their name matches OR if any of their events in the
+  // currently-loaded date range does (e.g. typing "vacaciones" surfaces
+  // everyone on vacation right now, not their whole history).
+  const textoBusqueda = busqueda.toLowerCase();
+  const empleadosFiltrados = empleados.filter((empleado) => {
+    const coincideNombre = empleado.nombre.toLowerCase().includes(textoBusqueda);
+    const coincideEvento = eventos.some(
+      (evento) =>
+        evento.empleadoId === empleado.id &&
+        ETIQUETAS[resolverVarianteEvento(evento)]
+          .toLowerCase()
+          .includes(textoBusqueda)
+    );
+
+    return coincideNombre || coincideEvento;
+  });
 
   function irAHoy() {
     setFecha(new Date());

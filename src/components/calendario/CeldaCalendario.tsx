@@ -4,7 +4,7 @@ import Badge from "@/components/ui/Badge";
 import Tooltip from "@/components/ui/Tooltip";
 import type { CeldaInfo, VarianteEvento } from "@/lib/calendario-celda";
 
-const ETIQUETAS: Record<VarianteEvento, string> = {
+export const ETIQUETAS: Record<VarianteEvento, string> = {
   vacacion: "Vacaciones",
   vacacionAnterior: "Vacaciones (año ant.)",
   ausente: "Ausencia",

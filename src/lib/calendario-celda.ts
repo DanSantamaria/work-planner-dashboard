@@ -35,7 +35,7 @@ export function esFinDeSemana(fecha: Date): boolean {
   return dia === 0 || dia === 6;
 }
 
-function resolverVarianteEvento(evento: EventoCalendario): VarianteEvento {
+export function resolverVarianteEvento(evento: EventoCalendario): VarianteEvento {
   if (evento.tipo === "VACACION") {
     return evento.origenVacacion === "ANIO_ANTERIOR"
       ? "vacacionAnterior"

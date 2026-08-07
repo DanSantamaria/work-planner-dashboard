@@ -19,7 +19,7 @@ const SEARCH_PLACEHOLDERS: Record<string, string> = {
   "/empleados": "Buscar empleado...",
   "/tareas": "Buscar tarea...",
   "/usuarios": "Buscar usuario...",
-  "/calendario": "Buscar empleado...",
+  "/calendario": "Buscar empleado o evento...",
 };
 
 export default function Header({ user }: { user: HeaderUser | null }) {
