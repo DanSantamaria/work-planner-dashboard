@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { LOB } from "@/generated/prisma/client";
 import SemanaView from "@/components/semana/SemanaView";
 
 export default async function SemanaPage() {
@@ -21,7 +22,10 @@ export default async function SemanaPage() {
       },
     }),
     prisma.empleado.findMany({
-      where: { activo: true },
+      // FIN_DE_SEMANA agents don't get weekly task assignments — they
+      // only show up on /calendario, which fetches everyone with no LOB
+      // filter.
+      where: { activo: true, lob: { not: LOB.FIN_DE_SEMANA } },
       orderBy: { nombre: "asc" },
     }),
     prisma.tarea.findMany({

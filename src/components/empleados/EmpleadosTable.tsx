@@ -6,6 +6,7 @@ import { LOB, Turno } from "@/generated/prisma/browser";
 import { Pencil, Trash2 } from "lucide-react";
 import { useBusqueda } from "@/context/BusquedaContext";
 import { ordenarEmpleadosFlat } from "@/lib/orden-empleados";
+import { getLobLabel } from "@/lib/lob-color";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Badge from "@/components/ui/Badge";
@@ -335,7 +336,7 @@ export default function EmpleadosTable({
           >
             {LOB_OPTIONS.map((lob) => (
               <option key={lob} value={lob}>
-                {lob}
+                {getLobLabel(lob)}
               </option>
             ))}
           </select>
@@ -491,12 +492,14 @@ export default function EmpleadosTable({
                       >
                         {LOB_OPTIONS.map((lob) => (
                           <option key={lob} value={lob}>
-                            {lob}
+                            {getLobLabel(lob)}
                           </option>
                         ))}
                       </select>
                     ) : (
-                      <span className="text-gray-600">{empleado.lob}</span>
+                      <span className="text-gray-600">
+                        {getLobLabel(empleado.lob)}
+                      </span>
                     )}
                   </TableCell>
                   <TableCell>

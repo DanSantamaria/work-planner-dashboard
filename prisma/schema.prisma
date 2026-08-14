@@ -21,6 +21,7 @@ enum LOB {
   FRANCIA
   IRLANDA
   COORDINACION
+  FIN_DE_SEMANA
 }
 
 enum Turno {
