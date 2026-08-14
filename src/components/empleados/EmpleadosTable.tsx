@@ -3,9 +3,9 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { LOB, Turno } from "@/generated/prisma/browser";
-import { Pencil, Trash2, ChevronUp, ChevronDown } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { useBusqueda } from "@/context/BusquedaContext";
-import { ordenarEmpleados, agruparPorGrupo } from "@/lib/orden-empleados";
+import { ordenarEmpleadosFlat } from "@/lib/orden-empleados";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Badge from "@/components/ui/Badge";
@@ -40,6 +40,37 @@ type Props = {
   initialGrupos: Grupo[];
 };
 
+// Local state while typing, only persisted on blur — same pattern as
+// SemanaGrid's CeldaEditable, avoiding a PUT per keystroke.
+function OrdenEnGrupoInput({
+  valorActual,
+  onGuardar,
+}: {
+  valorActual: number;
+  onGuardar: (nuevoValor: number) => void;
+}) {
+  const [valor, setValor] = useState(String(valorActual));
+
+  return (
+    <input
+      type="number"
+      min={0}
+      value={valor}
+      onChange={(e) => setValor(e.target.value)}
+      onBlur={() => {
+        const numero = Number(valor);
+        if (!Number.isNaN(numero) && numero >= 0 && numero !== valorActual) {
+          onGuardar(numero);
+        } else {
+          setValor(String(valorActual));
+        }
+      }}
+      className="w-14 rounded border border-gray-300 px-2 py-1 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sidebar"
+      aria-label="Posición dentro del grupo"
+    />
+  );
+}
+
 export default function EmpleadosTable({
   initialEmpleados,
   initialGrupos,
@@ -65,6 +96,10 @@ export default function EmpleadosTable({
   const [showGrupoForm, setShowGrupoForm] = useState(false);
   const [newGrupoNombre, setNewGrupoNombre] = useState("");
   const [creatingGrupo, setCreatingGrupo] = useState(false);
+
+  const [editingGrupoId, setEditingGrupoId] = useState<string | null>(null);
+  const [editGrupoNombre, setEditGrupoNombre] = useState("");
+  const [savingGrupoEdit, setSavingGrupoEdit] = useState(false);
 
   function actualizarEmpleadoLocal(id: string, datos: Partial<Empleado>) {
     setEmpleados((prev) =>
@@ -217,50 +252,27 @@ export default function EmpleadosTable({
     });
   }
 
-  // Ties (everyone starts at ordenEnGrupo 0) mean a plain value-swap between
-  // two tied rows would visibly do nothing on the first click. Reassigning
-  // the whole group to 0..N-1 in the new order guarantees the move always
-  // works, and permanently resolves ties within that group afterward.
-  async function moverEmpleado(
-    empleadosDelGrupo: Empleado[],
-    index: number,
-    direccion: -1 | 1
-  ) {
-    const otroIndex = index + direccion;
-    if (otroIndex < 0 || otroIndex >= empleadosDelGrupo.length) return;
-
-    const reordenado = [...empleadosDelGrupo];
-    [reordenado[index], reordenado[otroIndex]] = [
-      reordenado[otroIndex],
-      reordenado[index],
-    ];
-
+  // Direct number entry instead of relative up/down swaps — this table's
+  // own row order no longer reflects ordenEnGrupo (it's sorted flat by
+  // shift/LOB/name now, group-independent), so a swap-based control would
+  // silently change the number without the row visibly moving. Typing the
+  // number directly works regardless of how this page happens to sort.
+  async function handleOrdenEnGrupoChange(empleado: Empleado, nuevoOrden: number) {
     setError(null);
 
-    const resultados = await Promise.all(
-      reordenado.map(async (empleado, i) => {
-        const res = await fetch(`/api/empleados/${empleado.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ordenEnGrupo: i }),
-        });
-        return { id: empleado.id, ordenEnGrupo: i, ok: res.ok };
-      })
-    );
+    const res = await fetch(`/api/empleados/${empleado.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ordenEnGrupo: nuevoOrden }),
+    });
 
-    if (resultados.some((r) => !r.ok)) {
-      setError("No se pudo reordenar");
+    const data = await res.json();
+    if (!res.ok) {
+      setError(data.error ?? "No se pudo actualizar el orden");
       return;
     }
 
-    setEmpleados((prev) =>
-      prev.map((emp) => {
-        const actualizado = resultados.find((r) => r.id === emp.id);
-        return actualizado
-          ? { ...emp, ordenEnGrupo: actualizado.ordenEnGrupo }
-          : emp;
-      })
-    );
+    actualizarEmpleadoLocal(empleado.id, { ordenEnGrupo: data.ordenEnGrupo });
   }
 
   async function handleAddGrupo(e: FormEvent<HTMLFormElement>) {
@@ -268,10 +280,17 @@ export default function EmpleadosTable({
     setError(null);
     setCreatingGrupo(true);
 
+    // Every group created via this form previously defaulted to the same
+    // orden (0), which broke "Grupos y Totales" — groups with a tied
+    // orden aren't guaranteed to stay contiguous once sorted. Assigning
+    // the next free slot here keeps new groups distinct going forward.
+    const siguienteOrden =
+      Math.max(-1, ...gruposDisponibles.map((g) => g.orden)) + 1;
+
     const res = await fetch("/api/grupos", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nombre: newGrupoNombre }),
+      body: JSON.stringify({ nombre: newGrupoNombre, orden: siguienteOrden }),
     });
 
     const data = await res.json();
@@ -287,22 +306,47 @@ export default function EmpleadosTable({
     setShowGrupoForm(false);
   }
 
+  function startEditingGrupo(grupo: Grupo) {
+    setError(null);
+    setEditingGrupoId(grupo.id);
+    setEditGrupoNombre(grupo.nombre);
+  }
+
+  function cancelEditingGrupo() {
+    setEditingGrupoId(null);
+  }
+
+  async function handleSaveGrupoEdit(id: string) {
+    setError(null);
+    setSavingGrupoEdit(true);
+
+    const res = await fetch(`/api/grupos/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nombre: editGrupoNombre }),
+    });
+
+    const data = await res.json();
+    setSavingGrupoEdit(false);
+
+    if (!res.ok) {
+      setError(data.error ?? "No se pudo actualizar el grupo");
+      return;
+    }
+
+    setGruposDisponibles((prev) =>
+      prev.map((g) => (g.id === id ? { ...g, ...data } : g))
+    );
+    setEditingGrupoId(null);
+  }
+
   const empleadosFiltrados = empleados.filter((empleado) =>
     empleado.nombre.toLowerCase().includes(busqueda.toLowerCase())
   );
-  const grupos = agruparPorGrupo(ordenarEmpleados(empleadosFiltrados));
-
-  // Flattened once so the row-stripe index runs continuously across group
-  // boundaries, while indexEnGrupo/grupoEmpleados stay available for the
-  // up/down controls (which only care about position within their own group).
-  let contadorFila = 0;
-  const filas = grupos.flatMap((grupo) =>
-    grupo.empleados.map((empleado, indexEnGrupo) => ({
-      empleado,
-      grupoEmpleados: grupo.empleados,
-      indexEnGrupo,
-      indexGlobal: contadorFila++,
-    }))
+  // Flat by shift/LOB/name — Grupo assignment doesn't affect this page's
+  // row order, only the "Grupos y Totales" balance table's.
+  const filas = ordenarEmpleadosFlat(empleadosFiltrados).map(
+    (empleado, indexGlobal) => ({ empleado, indexGlobal })
   );
 
   return (
@@ -393,6 +437,57 @@ export default function EmpleadosTable({
         </form>
       )}
 
+      {gruposDisponibles.length > 0 && (
+        <div className="mb-6 flex flex-wrap gap-2">
+          {gruposDisponibles.map((grupo) => (
+            <div
+              key={grupo.id}
+              className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5"
+            >
+              {editingGrupoId === grupo.id ? (
+                <>
+                  <Input
+                    value={editGrupoNombre}
+                    onChange={(e) => setEditGrupoNombre(e.target.value)}
+                    compact
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleSaveGrupoEdit(grupo.id)}
+                    loading={savingGrupoEdit}
+                    className="text-green-600 hover:text-green-700"
+                  >
+                    Guardar
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={cancelEditingGrupo}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    Cancelar
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <span className="text-sm text-gray-700">{grupo.nombre}</span>
+                  <button
+                    type="button"
+                    onClick={() => startEditingGrupo(grupo)}
+                    className="cursor-pointer text-blue-600 hover:text-blue-700"
+                    title="Editar"
+                    aria-label="Editar"
+                  >
+                    <Pencil size={14} />
+                  </button>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
       <Table>
         <TableHead>
           <TableHeaderCell>Nombre</TableHeaderCell>
@@ -403,7 +498,7 @@ export default function EmpleadosTable({
           <TableHeaderCell>Acciones</TableHeaderCell>
         </TableHead>
         <TableBody>
-          {filas.map(({ empleado, grupoEmpleados, indexEnGrupo, indexGlobal }) => {
+          {filas.map(({ empleado, indexGlobal }) => {
             const isEditing = editingId === empleado.id;
 
             return (
@@ -426,31 +521,7 @@ export default function EmpleadosTable({
                     )}
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-1">
-                      <div className="flex flex-col">
-                        <button
-                          type="button"
-                          disabled={indexEnGrupo === 0}
-                          onClick={() =>
-                            moverEmpleado(grupoEmpleados, indexEnGrupo, -1)
-                          }
-                          className="text-gray-400 hover:text-gray-700 disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer"
-                          aria-label="Subir"
-                        >
-                          <ChevronUp size={14} />
-                        </button>
-                        <button
-                          type="button"
-                          disabled={indexEnGrupo === grupoEmpleados.length - 1}
-                          onClick={() =>
-                            moverEmpleado(grupoEmpleados, indexEnGrupo, 1)
-                          }
-                          className="text-gray-400 hover:text-gray-700 disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer"
-                          aria-label="Bajar"
-                        >
-                          <ChevronDown size={14} />
-                        </button>
-                      </div>
+                    <div className="flex items-center gap-2">
                       <select
                         className="border border-gray-300 rounded px-2 py-1 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sidebar"
                         value={empleado.grupoId ?? ""}
@@ -465,6 +536,15 @@ export default function EmpleadosTable({
                           </option>
                         ))}
                       </select>
+                      {empleado.grupoId && (
+                        <OrdenEnGrupoInput
+                          key={`${empleado.grupoId}-${empleado.ordenEnGrupo}`}
+                          valorActual={empleado.ordenEnGrupo}
+                          onGuardar={(nuevoValor) =>
+                            handleOrdenEnGrupoChange(empleado, nuevoValor)
+                          }
+                        />
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>

@@ -7,6 +7,7 @@ import SemanaEditBar from "@/components/semana/SemanaEditBar";
 import NuevaSemanaModal from "@/components/semana/NuevaSemanaModal";
 import { addDays } from "@/lib/date-utils";
 import { useBusqueda } from "@/context/BusquedaContext";
+import { ordenarEmpleadosFlat } from "@/lib/orden-empleados";
 import {
   agruparAsignaciones,
   type AsignacionCelda,
@@ -49,19 +50,6 @@ function formatearRangoSemana(fechaInicio: string) {
   return `${fmt(inicio)} - ${fmt(fin)}`;
 }
 
-function obtenerMinutosInicio(horario: string): number {
-  const match = horario.match(/^(\d{1,2}):(\d{2})/);
-  if (!match) return Infinity;
-
-  const horas = Number(match[1]);
-  const minutos = Number(match[2]);
-  const totalMinutos = horas * 60 + minutos;
-
-  // 00:00 representa la medianoche del turno de noche (NOCTURNO), que debe
-  // ir al final del orden, no al principio como sugeriría el valor 0.
-  return totalMinutos === 0 ? 24 * 60 : totalMinutos;
-}
-
 function tareasDelEmpleadoIncluyenTexto(
   tareasEmpleado: Record<number, AsignacionCelda[]> | undefined,
   texto: string
@@ -75,26 +63,6 @@ function tareasDelEmpleadoIncluyenTexto(
       asignacion.nombre.toLowerCase().includes(texto)
     )
   );
-}
-
-function ordenarEmpleados(empleados: Empleado[]) {
-  return [...empleados].sort((a, b) => {
-    const aEsPaloma = a.nombre === "Paloma Sánchez";
-    const bEsPaloma = b.nombre === "Paloma Sánchez";
-    if (aEsPaloma && !bEsPaloma) return -1;
-    if (bEsPaloma && !aEsPaloma) return 1;
-
-    const aEsCoordinacion = a.lob === "COORDINACION";
-    const bEsCoordinacion = b.lob === "COORDINACION";
-    if (aEsCoordinacion && !bEsCoordinacion) return -1;
-    if (bEsCoordinacion && !aEsCoordinacion) return 1;
-
-    const diferenciaHorario =
-      obtenerMinutosInicio(a.horario) - obtenerMinutosInicio(b.horario);
-    if (diferenciaHorario !== 0) return diferenciaHorario;
-
-    return a.lob.localeCompare(b.lob);
-  });
 }
 
 export default function SemanaView({
@@ -415,7 +383,7 @@ export default function SemanaView({
     : agruparAsignaciones(semanaActual.asignaciones);
 
   const textoBusqueda = busqueda.toLowerCase();
-  const empleadosOrdenados = ordenarEmpleados(empleados).filter((empleado) => {
+  const empleadosOrdenados = ordenarEmpleadosFlat(empleados).filter((empleado) => {
     const coincideNombre = empleado.nombre
       .toLowerCase()
       .includes(textoBusqueda);

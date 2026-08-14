@@ -14,34 +14,29 @@ function obtenerMinutosInicio(horario: string): number {
   return totalMinutos === 0 ? 24 * 60 : totalMinutos;
 }
 
-export type EmpleadoOrdenable = {
+export type EmpleadoOrdenableFlat = {
   nombre: string;
   lob: string;
   horario: string;
+};
+
+export type EmpleadoOrdenable = EmpleadoOrdenableFlat & {
   grupoId: string | null;
   ordenEnGrupo: number;
   grupo?: { orden: number; nombre: string } | null;
 };
 
 /**
- * Sort priority: Grupo.orden (ungrouped last), then the manual
- * ordenEnGrupo override, then the default fallback rule below — which is
- * intentionally identical to /semana's ordenarEmpleados (not shared code,
- * since /semana is out of scope for this plan, but kept in sync by hand
- * so both views order people the same way). Since ordenEnGrupo starts at
- * 0 for everyone, this fallback is what actually determines order until
- * someone is manually reordered via the up/down controls.
+ * The shared ordering rule for views that don't care about manual Grupo
+ * assignment (/empleados, /semana, /calendario's Día/Semana/Mes grids):
+ * Paloma first, Coordinación next, then shift start time, then LOB
+ * alphabetically, then employee name alphabetically as the final,
+ * fully-deterministic tiebreak.
  */
-export function compararEmpleados(
-  a: EmpleadoOrdenable,
-  b: EmpleadoOrdenable
+export function compararEmpleadosFlat(
+  a: EmpleadoOrdenableFlat,
+  b: EmpleadoOrdenableFlat
 ): number {
-  const ordenGrupoA = a.grupo?.orden ?? Number.MAX_SAFE_INTEGER;
-  const ordenGrupoB = b.grupo?.orden ?? Number.MAX_SAFE_INTEGER;
-  if (ordenGrupoA !== ordenGrupoB) return ordenGrupoA - ordenGrupoB;
-
-  if (a.ordenEnGrupo !== b.ordenEnGrupo) return a.ordenEnGrupo - b.ordenEnGrupo;
-
   const aEsPaloma = a.nombre === "Paloma Sánchez";
   const bEsPaloma = b.nombre === "Paloma Sánchez";
   if (aEsPaloma && !bEsPaloma) return -1;
@@ -56,7 +51,36 @@ export function compararEmpleados(
     obtenerMinutosInicio(a.horario) - obtenerMinutosInicio(b.horario);
   if (diferenciaHorario !== 0) return diferenciaHorario;
 
-  return a.lob.localeCompare(b.lob);
+  const diferenciaLob = a.lob.localeCompare(b.lob);
+  if (diferenciaLob !== 0) return diferenciaLob;
+
+  return a.nombre.localeCompare(b.nombre);
+}
+
+/**
+ * Sort priority for the "Grupos y Totales" balance table: Grupo.orden
+ * (ungrouped last), then the manually-assigned ordenEnGrupo, falling
+ * back to compararEmpleadosFlat only to break a tie within the same
+ * group/position (shouldn't happen once ordenEnGrupo values are unique,
+ * but keeps the order fully deterministic either way).
+ */
+export function compararEmpleados(
+  a: EmpleadoOrdenable,
+  b: EmpleadoOrdenable
+): number {
+  const ordenGrupoA = a.grupo?.orden ?? Number.MAX_SAFE_INTEGER;
+  const ordenGrupoB = b.grupo?.orden ?? Number.MAX_SAFE_INTEGER;
+  if (ordenGrupoA !== ordenGrupoB) return ordenGrupoA - ordenGrupoB;
+
+  if (a.ordenEnGrupo !== b.ordenEnGrupo) return a.ordenEnGrupo - b.ordenEnGrupo;
+
+  return compararEmpleadosFlat(a, b);
+}
+
+export function ordenarEmpleadosFlat<T extends EmpleadoOrdenableFlat>(
+  empleados: T[]
+): T[] {
+  return [...empleados].sort(compararEmpleadosFlat);
 }
 
 export function ordenarEmpleados<T extends EmpleadoOrdenable>(

@@ -10,6 +10,7 @@ import {
   LayoutGrid,
 } from "lucide-react";
 import { getMonday, addDays } from "@/lib/date-utils";
+import { compararEmpleadosFlat } from "@/lib/orden-empleados";
 import { useBusqueda } from "@/context/BusquedaContext";
 import { useClickOutside } from "@/hooks/useClickOutside";
 import { resolverCelda, resolverVarianteEvento } from "@/lib/calendario-celda";
@@ -187,18 +188,23 @@ export default function CalendarioView({ empleados, isStaff }: Props) {
   // currently-loaded date range does (e.g. typing "vacaciones" surfaces
   // everyone on vacation right now, not their whole history).
   const textoBusqueda = busqueda.toLowerCase();
-  const empleadosFiltrados = empleados.filter((empleado) => {
-    const coincideNombre = empleado.nombre.toLowerCase().includes(textoBusqueda);
-    const coincideEvento = eventos.some(
-      (evento) =>
-        evento.empleadoId === empleado.id &&
-        ETIQUETAS[resolverVarianteEvento(evento)]
-          .toLowerCase()
-          .includes(textoBusqueda)
-    );
+  // Sorted flat by shift/LOB/name regardless of manual Grupo assignment —
+  // Grupo only matters to the "Grupos y Totales" balance table, not the
+  // calendar grid itself.
+  const empleadosFiltrados = empleados
+    .filter((empleado) => {
+      const coincideNombre = empleado.nombre.toLowerCase().includes(textoBusqueda);
+      const coincideEvento = eventos.some(
+        (evento) =>
+          evento.empleadoId === empleado.id &&
+          ETIQUETAS[resolverVarianteEvento(evento)]
+            .toLowerCase()
+            .includes(textoBusqueda)
+      );
 
-    return coincideNombre || coincideEvento;
-  });
+      return coincideNombre || coincideEvento;
+    })
+    .sort(compararEmpleadosFlat);
 
   function irAHoy() {
     setFecha(new Date());
