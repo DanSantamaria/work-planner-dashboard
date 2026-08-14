@@ -175,9 +175,11 @@ export default function SelectorFecha({ fecha, modo, onSeleccionar }: Props) {
               <button
                 key={nombre}
                 type="button"
-                onClick={() =>
-                  onSeleccionar(new Date(cursor.getFullYear(), indiceMes, 1))
-                }
+                onClick={() => {
+                  const nuevaFecha = new Date(cursor.getFullYear(), indiceMes, 1);
+                  setCursor(nuevaFecha);
+                  onSeleccionar(nuevaFecha);
+                }}
                 className={`cursor-pointer rounded-md py-2 text-center text-sm ${
                   esMesSeleccionado
                     ? "bg-accent font-bold"
@@ -192,7 +194,11 @@ export default function SelectorFecha({ fecha, modo, onSeleccionar }: Props) {
 
         <button
           type="button"
-          onClick={() => onSeleccionar(new Date())}
+          onClick={() => {
+            const hoy = new Date();
+            setCursor(hoy);
+            onSeleccionar(hoy);
+          }}
           className="mt-4 cursor-pointer text-sm text-gray-300 hover:text-white"
         >
           Hoy
