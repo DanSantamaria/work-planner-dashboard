@@ -1,8 +1,9 @@
 "use client";
 
 import { Fragment, useState } from "react";
+import { ChevronUp, ChevronDown } from "lucide-react";
 import { useBusqueda } from "@/context/BusquedaContext";
-import { agruparPorGrupo } from "@/lib/orden-empleados";
+import { agruparPorGrupo, ordenarEmpleados } from "@/lib/orden-empleados";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import {
@@ -170,10 +171,61 @@ export default function BalanceTable({ initialEmpleados, isStaff }: Props) {
     setEdicion(null);
   }
 
+  // Ties (everyone starts at ordenEnGrupo 0) mean a plain value-swap
+  // between two tied rows would visibly do nothing on the first click.
+  // Reassigning the whole group to 0..N-1 in the new order guarantees the
+  // move always works, and permanently resolves ties within that group.
+  async function moverEmpleado(
+    empleadosDelGrupo: Empleado[],
+    index: number,
+    direccion: -1 | 1
+  ) {
+    const otroIndex = index + direccion;
+    if (otroIndex < 0 || otroIndex >= empleadosDelGrupo.length) return;
+
+    const reordenado = [...empleadosDelGrupo];
+    [reordenado[index], reordenado[otroIndex]] = [
+      reordenado[otroIndex],
+      reordenado[index],
+    ];
+
+    setError(null);
+
+    const resultados = await Promise.all(
+      reordenado.map(async (empleado, i) => {
+        const res = await fetch(`/api/empleados/${empleado.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ordenEnGrupo: i }),
+        });
+        return { id: empleado.id, ordenEnGrupo: i, ok: res.ok };
+      })
+    );
+
+    if (resultados.some((r) => !r.ok)) {
+      setError("No se pudo reordenar");
+      return;
+    }
+
+    setEmpleados((prev) =>
+      prev.map((emp) => {
+        const actualizado = resultados.find((r) => r.id === emp.id);
+        return actualizado
+          ? { ...emp, ordenEnGrupo: actualizado.ordenEnGrupo }
+          : emp;
+      })
+    );
+  }
+
   const empleadosFiltrados = empleados.filter((empleado) =>
     empleado.nombre.toLowerCase().includes(busqueda.toLowerCase())
   );
-  const grupos = agruparPorGrupo(empleadosFiltrados);
+  // agruparPorGrupo needs its input pre-sorted by ordenEnGrupo — after a
+  // reorder, setEmpleados only updates each employee's ordenEnGrupo value
+  // in place, not their position in the array, so re-sorting here is what
+  // actually makes the new order show up (and keeps the up/down buttons'
+  // index math correct) without a full page reload.
+  const grupos = agruparPorGrupo(ordenarEmpleados(empleadosFiltrados));
 
   return (
     <div>
@@ -185,6 +237,7 @@ export default function BalanceTable({ initialEmpleados, isStaff }: Props) {
 
       <Table>
         <TableHead>
+          {isStaff && <TableHeaderCell className="w-16" />}
           <TableHeaderCell className="w-12">#</TableHeaderCell>
           <TableHeaderCell>Empleado</TableHeaderCell>
           <TableHeaderCell>Vacaciones (días)</TableHeaderCell>
@@ -195,12 +248,43 @@ export default function BalanceTable({ initialEmpleados, isStaff }: Props) {
           {grupos.map((grupo) => (
             <Fragment key={grupo.grupoId ?? "sin-grupo"}>
               <tr className="bg-sidebar text-white">
-                <TableCell colSpan={5} className="font-bold border-gray-300">
+                <TableCell
+                  colSpan={isStaff ? 6 : 5}
+                  className="font-bold border-gray-300"
+                >
                   {grupo.nombreGrupo}
                 </TableCell>
               </tr>
               {grupo.empleados.map((empleado, index) => (
                 <TableRow key={empleado.id} index={index}>
+                  {isStaff && (
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <button
+                          type="button"
+                          disabled={index === 0}
+                          onClick={() =>
+                            moverEmpleado(grupo.empleados, index, -1)
+                          }
+                          className="cursor-pointer text-gray-400 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-20"
+                          aria-label="Subir"
+                        >
+                          <ChevronUp size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={index === grupo.empleados.length - 1}
+                          onClick={() =>
+                            moverEmpleado(grupo.empleados, index, 1)
+                          }
+                          className="cursor-pointer text-gray-400 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-20"
+                          aria-label="Bajar"
+                        >
+                          <ChevronDown size={14} />
+                        </button>
+                      </div>
+                    </TableCell>
+                  )}
                   <TableCell className="text-gray-500">{index + 1}</TableCell>
                   <TableCell>
                     <span className="text-gray-800 font-medium">

@@ -40,37 +40,6 @@ type Props = {
   initialGrupos: Grupo[];
 };
 
-// Local state while typing, only persisted on blur — same pattern as
-// SemanaGrid's CeldaEditable, avoiding a PUT per keystroke.
-function OrdenEnGrupoInput({
-  valorActual,
-  onGuardar,
-}: {
-  valorActual: number;
-  onGuardar: (nuevoValor: number) => void;
-}) {
-  const [valor, setValor] = useState(String(valorActual));
-
-  return (
-    <input
-      type="number"
-      min={0}
-      value={valor}
-      onChange={(e) => setValor(e.target.value)}
-      onBlur={() => {
-        const numero = Number(valor);
-        if (!Number.isNaN(numero) && numero >= 0 && numero !== valorActual) {
-          onGuardar(numero);
-        } else {
-          setValor(String(valorActual));
-        }
-      }}
-      className="w-14 rounded border border-gray-300 px-2 py-1 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sidebar"
-      aria-label="Posición dentro del grupo"
-    />
-  );
-}
-
 export default function EmpleadosTable({
   initialEmpleados,
   initialGrupos,
@@ -250,29 +219,6 @@ export default function EmpleadosTable({
       ordenEnGrupo: nuevoOrden,
       grupo: grupoEncontrado,
     });
-  }
-
-  // Direct number entry instead of relative up/down swaps — this table's
-  // own row order no longer reflects ordenEnGrupo (it's sorted flat by
-  // shift/LOB/name now, group-independent), so a swap-based control would
-  // silently change the number without the row visibly moving. Typing the
-  // number directly works regardless of how this page happens to sort.
-  async function handleOrdenEnGrupoChange(empleado: Empleado, nuevoOrden: number) {
-    setError(null);
-
-    const res = await fetch(`/api/empleados/${empleado.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ordenEnGrupo: nuevoOrden }),
-    });
-
-    const data = await res.json();
-    if (!res.ok) {
-      setError(data.error ?? "No se pudo actualizar el orden");
-      return;
-    }
-
-    actualizarEmpleadoLocal(empleado.id, { ordenEnGrupo: data.ordenEnGrupo });
   }
 
   async function handleAddGrupo(e: FormEvent<HTMLFormElement>) {
@@ -521,31 +467,20 @@ export default function EmpleadosTable({
                     )}
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2">
-                      <select
-                        className="border border-gray-300 rounded px-2 py-1 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sidebar"
-                        value={empleado.grupoId ?? ""}
-                        onChange={(e) =>
-                          handleGrupoChange(empleado, e.target.value)
-                        }
-                      >
-                        <option value="">Sin grupo</option>
-                        {gruposDisponibles.map((g) => (
-                          <option key={g.id} value={g.id}>
-                            {g.nombre}
-                          </option>
-                        ))}
-                      </select>
-                      {empleado.grupoId && (
-                        <OrdenEnGrupoInput
-                          key={`${empleado.grupoId}-${empleado.ordenEnGrupo}`}
-                          valorActual={empleado.ordenEnGrupo}
-                          onGuardar={(nuevoValor) =>
-                            handleOrdenEnGrupoChange(empleado, nuevoValor)
-                          }
-                        />
-                      )}
-                    </div>
+                    <select
+                      className="border border-gray-300 rounded px-2 py-1 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sidebar"
+                      value={empleado.grupoId ?? ""}
+                      onChange={(e) =>
+                        handleGrupoChange(empleado, e.target.value)
+                      }
+                    >
+                      <option value="">Sin grupo</option>
+                      {gruposDisponibles.map((g) => (
+                        <option key={g.id} value={g.id}>
+                          {g.nombre}
+                        </option>
+                      ))}
+                    </select>
                   </TableCell>
                   <TableCell>
                     {isEditing ? (
