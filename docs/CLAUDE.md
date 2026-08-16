@@ -17,6 +17,7 @@ Only load a doc when its trigger applies — don't pull all of these into contex
 | [docs/STANDARDS/design-system.md](STANDARDS/design-system.md) | When creating or modifying a UI component, or adding a color/spacing value |
 | [docs/STANDARDS/security.md](STANDARDS/security.md) | When touching auth, API routes, forms, server actions, logging, or user data |
 | [docs/STANDARDS/architecture-guidelines.md](STANDARDS/architecture-guidelines.md) | When deciding whether to add an abstraction, helper, or new module |
+| [docs/STANDARDS/database.md](STANDARDS/database.md) | When touching `prisma/schema.prisma`, running migrations, or touching database/env config |
 | [docs/STANDARDS/documentation.md](STANDARDS/documentation.md) | When writing code comments, TSDoc, or a README |
 | [docs/STANDARDS/issues-workflow.md](STANDARDS/issues-workflow.md) | When starting, committing, or merging feature work |
 | [docs/STANDARDS/plans-workflow.md](STANDARDS/plans-workflow.md) | When starting, updating, or finishing a plan in `docs/plans/` |
