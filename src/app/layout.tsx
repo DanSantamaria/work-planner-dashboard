@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -15,6 +15,13 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: "CAC Dashboard",
   description: "Panel de planificación semanal y gestión de equipos para el equipo CAC.",
+};
+
+// Next injects an equivalent default, but declaring it here makes it ours:
+// the phone-facing knobs (scale, safe areas) now have an obvious home.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({

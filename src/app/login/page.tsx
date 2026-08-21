@@ -35,7 +35,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-50">
+    <main className="min-h-dvh flex items-center justify-center bg-gray-50">
       <Card className="p-8 w-full max-w-md">
         <h1 className="text-2xl font-bold text-gray-800 mb-2">
           Iniciar Sesión
