@@ -67,9 +67,9 @@ export default function WeekGrid({
       </thead>
       <tbody>
         {empleados.map((empleado) => (
-          <tr key={empleado.id} className="bg-white">
+          <tr key={empleado.id} className="group bg-white hover:bg-row-hover">
             <td
-              className={`sticky left-0 z-10 border border-gray-300 bg-white pl-8 pr-4 py-2 font-semibold text-gray-700 ${getLobBorderClass(empleado.lob)}`}
+              className={`sticky left-0 z-10 border border-gray-300 bg-white pl-8 pr-4 py-2 font-semibold text-gray-700 group-hover:bg-row-hover ${getLobBorderClass(empleado.lob)}`}
             >
               {empleado.nombre}
             </td>
@@ -84,7 +84,7 @@ export default function WeekGrid({
               return (
                 <td
                   key={dia.fecha.toISOString()}
-                  className={`border border-gray-300 px-2 py-1 align-top ${
+                  className={`border border-gray-300 px-2 py-1 align-top group-hover:bg-row-hover ${
                     celda.cerrado ? "bg-feriado-bg" : ""
                   }`}
                 >

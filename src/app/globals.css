@@ -9,6 +9,9 @@
   --color-accent: #E9865C;
   --color-page: #F2F2F2;
   --color-table-header: #E6E6E6;
+  /* Row highlight on hover — a barely-there lavender tint of the sidebar
+     purple, distinct from both the white and the gray zebra stripe. */
+  --color-row-hover: #EDEBF5;
 
   /* LOB colors */
   --color-lob-espana: #FFE0E0;

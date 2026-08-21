@@ -32,9 +32,28 @@ export type Empleado = {
 };
 
 type CampoTotal = "diasVacaciones" | "horasExceso" | "horasMedicasTotal";
+type CampoUsado =
+  | "diasVacacionesUsados"
+  | "horasExcesoUsadas"
+  | "horasMedicasUsadas";
+
+// The DB keeps two numbers per concept (yearly total + consumed), but the
+// table only ever shows and edits their difference — the balance left today,
+// which is the only figure that means anything mid-year. Editing therefore
+// translates: what you type is the balance you want, what gets saved is the
+// total that makes the subtraction come out to it. This map is how the cell
+// finds the "consumed" counterpart of the total it is editing.
+const CAMPO_USADO: Record<CampoTotal, CampoUsado> = {
+  diasVacaciones: "diasVacacionesUsados",
+  horasExceso: "horasExcesoUsadas",
+  horasMedicasTotal: "horasMedicasUsadas",
+};
 
 type Props = {
-  initialEmpleados: Empleado[];
+  // Named "servidor" rather than "initial": it is not just a seed value —
+  // every time the page's server component re-runs (router.refresh() after
+  // saving an event), a fresh array arrives here and the table syncs to it.
+  empleadosServidor: Empleado[];
   isStaff: boolean;
 };
 
@@ -68,7 +87,7 @@ function BalanceCelda({
   onGuardar: () => void;
   onCancelar: () => void;
 }) {
-  const restante = total - usado;
+  const saldo = total - usado;
 
   if (editando) {
     return (
@@ -102,37 +121,48 @@ function BalanceCelda({
     );
   }
 
+  if (!editable) {
+    return <span className="text-gray-700">{saldo}</span>;
+  }
+
   return (
-    <span className="text-gray-700">
-      {restante} /{" "}
-      {editable ? (
-        <button
-          type="button"
-          onClick={onEmpezarEdicion}
-          title="Editar total"
-          className="underline decoration-dotted underline-offset-2 hover:text-sidebar cursor-pointer"
-        >
-          {total}
-        </button>
-      ) : (
-        total
-      )}
-    </span>
+    <button
+      type="button"
+      onClick={onEmpezarEdicion}
+      title="Editar saldo"
+      className="cursor-pointer text-gray-700 underline decoration-dotted underline-offset-2 hover:text-sidebar"
+    >
+      {saldo}
+    </button>
   );
 }
 
-export default function BalanceTable({ initialEmpleados, isStaff }: Props) {
+export default function BalanceTable({ empleadosServidor, isStaff }: Props) {
   const { busqueda } = useBusqueda();
-  const [empleados, setEmpleados] = useState<Empleado[]>(initialEmpleados);
+  const [empleados, setEmpleados] = useState<Empleado[]>(empleadosServidor);
+  const [servidorPrevio, setServidorPrevio] = useState(empleadosServidor);
+
+  // Local state exists so edits and reorders show up instantly, but it would
+  // otherwise stay frozen at whatever mount captured — which is why balances
+  // used to need a page reload to reflect a new evento. React's documented
+  // "adjust state while rendering" pattern (rather than a useEffect, which
+  // would render twice and flash the stale number) resyncs whenever a new
+  // array arrives. Identity only changes when the server sends fresh data:
+  // RSC payloads stay stable across client re-renders, so this never fights
+  // the in-place updates below — by then the server data already has them.
+  if (empleadosServidor !== servidorPrevio) {
+    setServidorPrevio(empleadosServidor);
+    setEmpleados(empleadosServidor);
+  }
   const [edicion, setEdicion] = useState<EdicionActiva>(null);
   const [valorEdicion, setValorEdicion] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  function empezarEdicion(empleadoId: string, campo: CampoTotal, valorActual: number) {
+  function empezarEdicion(empleadoId: string, campo: CampoTotal, saldoActual: number) {
     setError(null);
     setEdicion({ empleadoId, campo });
-    setValorEdicion(String(valorActual));
+    setValorEdicion(String(saldoActual));
   }
 
   function cancelarEdicion() {
@@ -142,11 +172,23 @@ export default function BalanceTable({ initialEmpleados, isStaff }: Props) {
   async function guardarEdicion() {
     if (!edicion) return;
 
-    const valor = Number(valorEdicion);
-    if (isNaN(valor) || valor < 0) {
+    const saldo = Number(valorEdicion);
+    if (isNaN(saldo) || saldo < 0) {
       setError("El valor debe ser un número mayor o igual a cero");
       return;
     }
+
+    const empleado = empleados.find((emp) => emp.id === edicion.empleadoId);
+    if (!empleado) {
+      setError("No se encontró el empleado");
+      return;
+    }
+
+    // The typed number is a balance, the column stores a yearly total, so
+    // add back whatever events have already consumed. total - usado then
+    // renders exactly the number that was typed.
+    const usado = empleado[CAMPO_USADO[edicion.campo]];
+    const totalNuevo = saldo + usado;
 
     setError(null);
     setGuardando(true);
@@ -154,7 +196,7 @@ export default function BalanceTable({ initialEmpleados, isStaff }: Props) {
     const res = await fetch(`/api/empleados/${edicion.empleadoId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ [edicion.campo]: valor }),
+      body: JSON.stringify({ [edicion.campo]: totalNuevo }),
     });
 
     const data = await res.json();
@@ -236,7 +278,7 @@ export default function BalanceTable({ initialEmpleados, isStaff }: Props) {
       )}
 
       <Table>
-        <TableHead>
+        <TableHead sticky={false}>
           {isStaff && <TableHeaderCell className="w-16" />}
           <TableHeaderCell className="w-12">#</TableHeaderCell>
           <TableHeaderCell>Empleado</TableHeaderCell>
@@ -306,7 +348,7 @@ export default function BalanceTable({ initialEmpleados, isStaff }: Props) {
                         empezarEdicion(
                           empleado.id,
                           "diasVacaciones",
-                          empleado.diasVacaciones
+                          empleado.diasVacaciones - empleado.diasVacacionesUsados
                         )
                       }
                       onCambiarValor={setValorEdicion}
@@ -329,7 +371,7 @@ export default function BalanceTable({ initialEmpleados, isStaff }: Props) {
                         empezarEdicion(
                           empleado.id,
                           "horasExceso",
-                          empleado.horasExceso
+                          empleado.horasExceso - empleado.horasExcesoUsadas
                         )
                       }
                       onCambiarValor={setValorEdicion}
@@ -352,7 +394,7 @@ export default function BalanceTable({ initialEmpleados, isStaff }: Props) {
                         empezarEdicion(
                           empleado.id,
                           "horasMedicasTotal",
-                          empleado.horasMedicasTotal
+                          empleado.horasMedicasTotal - empleado.horasMedicasUsadas
                         )
                       }
                       onCambiarValor={setValorEdicion}
