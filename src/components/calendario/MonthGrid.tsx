@@ -38,12 +38,17 @@ export default function MonthGrid({
 
   // No month/year heading here: the toolbar's ← → label already says which
   // month is on screen, and repeating it just pushed the grid down.
+  //
+  // w-auto: with 31 day columns a w-full table divides the container between
+  // them and squashes every cell flat. Letting the table take the width its
+  // columns ask for keeps them square-ish and moves the excess into the
+  // horizontal scroll, which is the trade being made here.
   return (
-    <GridTable textoClase="text-xs">
+    <GridTable textoClase="text-xs" anchoClase="w-auto">
       <thead>
         <tr>
           <NombreHeaderCell
-            anchoClase="w-44"
+            anchoClase="w-28 md:w-44"
             paddingClase="px-3 py-2"
             textoClase=""
           >
@@ -54,7 +59,7 @@ export default function MonthGrid({
               key={dia.toISOString()}
               numero={dia.getDate()}
               hoy={esHoy(dia)}
-              anchoClase="w-9"
+              anchoClase="w-11"
               paddingClase="px-1 py-2"
             />
           ))}
@@ -79,7 +84,7 @@ export default function MonthGrid({
               return (
                 <td
                   key={dia.toISOString()}
-                  className={`border border-gray-300 p-0.5 text-center align-middle group-hover:bg-row-hover ${
+                  className={`border border-gray-300 p-1.5 text-center align-middle group-hover:bg-row-hover ${
                     celda.cerrado ? "bg-feriado-bg" : ""
                   }`}
                 >

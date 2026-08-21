@@ -9,11 +9,14 @@ type TableProps = {
   className?: string;
 };
 
-// No overflow here on purpose — see the note in GridTable: an overflow of any
-// kind would become the scroll container and kill the header's sticking.
+// Two behaviours, split at md — see the note in GridTable for the reasoning.
+// Phones: the table scrolls sideways inside its own box. Desktop: no overflow
+// at all, so <main> stays the scroll container and the header can stick.
 export function Table({ children, className }: TableProps) {
   return (
-    <div className={`border border-gray-200 rounded-lg ${className ?? ""}`}>
+    <div
+      className={`overflow-x-auto rounded-lg border border-gray-200 md:overflow-visible ${className ?? ""}`}
+    >
       <table className="w-full border-collapse text-sm">{children}</table>
     </div>
   );
@@ -38,7 +41,9 @@ export function TableHead({
   // overlap swallows it — including the 4px "today" bar in the calendar
   // grids, whose outer half is the widest offender. Don't push this past 2px:
   // at 4px the today bar itself would disappear once the header pins.
-  const stickyClase = sticky ? "[&>th]:sticky [&>th]:-top-0.5 [&>th]:z-20" : "";
+  const stickyClase = sticky
+    ? "md:[&>th]:sticky md:[&>th]:-top-0.5 md:[&>th]:z-20"
+    : "";
 
   return (
     <thead>

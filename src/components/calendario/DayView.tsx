@@ -49,7 +49,7 @@ export default function DayView({
     <GridTable>
       <thead>
         <tr>
-          <NombreHeaderCell anchoClase="w-56">Nombre</NombreHeaderCell>
+          <NombreHeaderCell anchoClase="w-36 md:w-56">Nombre</NombreHeaderCell>
           <DiaHeaderCell
             numero={fecha.getDate()}
             nombreDia={DAY_NAMES[fecha.getDay()]}

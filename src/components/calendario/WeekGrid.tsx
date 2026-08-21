@@ -54,7 +54,7 @@ export default function WeekGrid({
     <GridTable>
       <thead>
         <tr>
-          <NombreHeaderCell anchoClase="w-56">Nombre</NombreHeaderCell>
+          <NombreHeaderCell anchoClase="w-36 md:w-56">Nombre</NombreHeaderCell>
           {dias.map((dia) => (
             <DiaHeaderCell
               key={dia.fecha.toISOString()}

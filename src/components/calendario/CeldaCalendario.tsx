@@ -30,7 +30,7 @@ export const CELDA_BG_CLASSES: Record<VarianteEvento, string> = {
 
 function Marca({ variant, compact }: { variant: VarianteEvento; compact: boolean }) {
   if (compact) {
-    return <span className={`mx-auto block h-3 w-3 rounded-full ${DOT_CLASSES[variant]}`} />;
+    return <span className={`mx-auto block h-2 w-2 rounded-full ${DOT_CLASSES[variant]}`} />;
   }
   return <Badge variant={variant}>{ETIQUETAS[variant]}</Badge>;
 }
