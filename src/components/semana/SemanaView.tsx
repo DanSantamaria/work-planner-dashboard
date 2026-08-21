@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { Pencil, X } from "lucide-react";
 import SemanaGrid from "@/components/semana/SemanaGrid";
+import SegmentedControl from "@/components/ui/SegmentedControl";
 import SemanaEditBar from "@/components/semana/SemanaEditBar";
 import NuevaSemanaModal from "@/components/semana/NuevaSemanaModal";
 import { addDays } from "@/lib/date-utils";
+import { formatearDia, formatearRango } from "@/lib/formato-fecha";
 import { useBusqueda } from "@/context/BusquedaContext";
 import { ordenarEmpleadosFlat } from "@/lib/orden-empleados";
 import {
@@ -40,25 +42,57 @@ type Props = {
   isAdmin: boolean;
 };
 
-function formatearRangoSemana(fechaInicio: string) {
+type Vista = "DIA" | "SEMANA";
+
+// Weeks here are Lunes(1)..Viernes(5) — the diaSemana numbering used by the
+// assignments, not JavaScript's getDay().
+const DIA_MIN = 1;
+const DIA_MAX = 5;
+
+const ETIQUETAS_VISTA: Record<Vista, string> = {
+  DIA: "Día",
+  SEMANA: "Semana",
+};
+
+// Assignments are stored with diaSemana 1..5 (Lunes..Viernes), while
+// JavaScript's getDay() runs 0..6 starting on Sunday. Monday through Friday
+// happen to line up (1..5), so only the weekend needs handling: Saturday and
+// Sunday have no column here, and land on Viernes instead of an empty screen.
+function diaSemanaDeHoy(): number {
+  const jsDia = new Date().getDay();
+  if (jsDia === 0 || jsDia === 6) return DIA_MAX;
+  return jsDia;
+}
+
+// Same wording as /calendario ("17-21 Agosto, 2026"), just over a shorter
+// span: weeks here run Lunes–Viernes, five days instead of seven.
+function formatearRangoSemana(fechaInicio: string): string {
   const inicio = new Date(fechaInicio);
-  const fin = addDays(inicio, 4);
+  return formatearRango(inicio, addDays(inicio, 4));
+}
 
-  const fmt = (d: Date) =>
-    `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`;
-
-  return `${fmt(inicio)} - ${fmt(fin)}`;
+// diaSemana is 1..5, so day 1 is the Monday itself — hence the -1.
+function fechaDelDia(fechaInicio: string, diaSemana: number): Date {
+  return addDays(new Date(fechaInicio), diaSemana - 1);
 }
 
 function tareasDelEmpleadoIncluyenTexto(
   tareasEmpleado: Record<number, AsignacionCelda[]> | undefined,
-  texto: string
+  texto: string,
+  diaVisible?: number
 ): boolean {
   if (!tareasEmpleado) return false;
 
-  // tareasEmpleado está indexado por día (1-5); Object.values recorre las
-  // asignaciones de los 5 días sin importar cuáles existan.
-  return Object.values(tareasEmpleado).some((asignacionesDelDia) =>
+  // tareasEmpleado está indexado por día (1-5). En vista Semana se recorren
+  // los cinco; en vista Día, solo el que está en pantalla — si no, buscar
+  // "RECEPCION" dejaría visible a alguien que hace recepción otro día,
+  // mientras la columna de enfrente dice otra cosa, y se lee como un error.
+  const diasABuscar =
+    diaVisible === undefined
+      ? Object.values(tareasEmpleado)
+      : [tareasEmpleado[diaVisible] ?? []];
+
+  return diasABuscar.some((asignacionesDelDia) =>
     asignacionesDelDia.some((asignacion) =>
       asignacion.nombre.toLowerCase().includes(texto)
     )
@@ -79,6 +113,9 @@ export default function SemanaView({
   const [selectedWeekId, setSelectedWeekId] = useState<string | null>(
     semanaInicialId
   );
+  const [vista, setVista] = useState<Vista>("SEMANA");
+  // 1..5 — same numbering the assignments use, never JS's getDay().
+  const [diaSeleccionado, setDiaSeleccionado] = useState(diaSemanaDeHoy);
   const [editMode, setEditMode] = useState(false);
   const [draftAsignaciones, setDraftAsignaciones] = useState<
     Record<string, Record<number, AsignacionCelda[]>>
@@ -98,24 +135,50 @@ export default function SemanaView({
     );
   }
 
-  function irASemana(id: string) {
-    if (!confirmarDescartarCambios()) return;
+  // Returns false when the user backed out of discarding an edit draft, so
+  // callers can skip whatever they meant to do next (e.g. landing on a
+  // particular weekday of the week they didn't end up moving to).
+  function irASemana(id: string): boolean {
+    if (!confirmarDescartarCambios()) return false;
     setEditMode(false);
     setError(null);
     setSelectedWeekId(id);
+    return true;
   }
 
+  // The arrows step through whatever the current view is made of: days in
+  // Día, weeks in Semana — the same rule /calendario follows. Stepping off
+  // either end of the week rolls into the neighbouring one, which counts as
+  // a week change and therefore goes through the unsaved-changes guard.
   function irAnterior() {
-    if (currentIndex > 0) {
-      irASemana(semanas[currentIndex - 1].id);
+    if (vista === "DIA" && diaSeleccionado > DIA_MIN) {
+      setDiaSeleccionado((dia) => dia - 1);
+      return;
     }
+
+    if (currentIndex <= 0) return;
+    if (!irASemana(semanas[currentIndex - 1].id)) return;
+    if (vista === "DIA") setDiaSeleccionado(DIA_MAX);
   }
 
   function irSiguiente() {
-    if (currentIndex >= 0 && currentIndex < semanas.length - 1) {
-      irASemana(semanas[currentIndex + 1].id);
+    if (vista === "DIA" && diaSeleccionado < DIA_MAX) {
+      setDiaSeleccionado((dia) => dia + 1);
+      return;
     }
+
+    if (currentIndex < 0 || currentIndex >= semanas.length - 1) return;
+    if (!irASemana(semanas[currentIndex + 1].id)) return;
+    if (vista === "DIA") setDiaSeleccionado(DIA_MIN);
   }
+
+  // In Día there is somewhere to go as long as days remain in this week,
+  // even when it is the first or last week loaded.
+  const hayAnterior =
+    currentIndex > 0 || (vista === "DIA" && diaSeleccionado > DIA_MIN);
+  const haySiguiente =
+    (currentIndex >= 0 && currentIndex < semanas.length - 1) ||
+    (vista === "DIA" && diaSeleccionado < DIA_MAX);
 
   function handleEditarSemana() {
     if (!semanaActual) return;
@@ -389,7 +452,8 @@ export default function SemanaView({
       .includes(textoBusqueda);
     const coincideTarea = tareasDelEmpleadoIncluyenTexto(
       tareasParaGrid[empleado.id],
-      textoBusqueda
+      textoBusqueda,
+      vista === "DIA" ? diaSeleccionado : undefined
     );
 
     return coincideNombre || coincideTarea;
@@ -407,17 +471,21 @@ export default function SemanaView({
         <div className="flex items-center gap-2">
           <button
             onClick={irAnterior}
-            disabled={currentIndex <= 0}
+            disabled={!hayAnterior}
             className="cursor-pointer text-lg text-accent hover:opacity-75 disabled:cursor-not-allowed disabled:opacity-30"
           >
             ◄
           </button>
           <span className="text-lg font-bold text-accent">
-            Semana {formatearRangoSemana(semanaActual.fechaInicio)}
+            {vista === "DIA"
+              ? formatearDia(
+                  fechaDelDia(semanaActual.fechaInicio, diaSeleccionado)
+                )
+              : formatearRangoSemana(semanaActual.fechaInicio)}
           </span>
           <button
             onClick={irSiguiente}
-            disabled={currentIndex < 0 || currentIndex >= semanas.length - 1}
+            disabled={!haySiguiente}
             className="cursor-pointer text-lg text-accent hover:opacity-75 disabled:cursor-not-allowed disabled:opacity-30"
           >
             ►
@@ -432,6 +500,20 @@ export default function SemanaView({
             + Nueva Semana
           </button>
         )}
+
+        {/* mx-auto centra el selector en el espacio que queda entre el grupo
+            de la izquierda y el de la derecha, igual que en /calendario. */}
+        <div className="mx-auto">
+          <SegmentedControl
+            etiquetaGrupo="Vista de la planificación"
+            opciones={(Object.keys(ETIQUETAS_VISTA) as Vista[]).map((v) => ({
+              valor: v,
+              etiqueta: ETIQUETAS_VISTA[v],
+            }))}
+            valor={vista}
+            onChange={setVista}
+          />
+        </div>
 
         <span className="ml-auto text-sm text-gray-600">
           Estado: {semanaActual.publicada ? "Publicada 🟢" : "Borrador 🟡"}
@@ -450,6 +532,7 @@ export default function SemanaView({
 
       <SemanaGrid
         fechaInicio={semanaActual.fechaInicio}
+        diaVisible={vista === "DIA" ? diaSeleccionado : undefined}
         empleados={empleadosOrdenados}
         tareas={tareasParaGrid}
         editable={editMode}
