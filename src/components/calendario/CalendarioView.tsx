@@ -11,6 +11,11 @@ import {
   LayoutGrid,
 } from "lucide-react";
 import { getMonday, addDays } from "@/lib/date-utils";
+import {
+  formatearDia,
+  formatearMes,
+  formatearRango,
+} from "@/lib/formato-fecha";
 import { compararEmpleadosFlat } from "@/lib/orden-empleados";
 import { useBusqueda } from "@/context/BusquedaContext";
 import { useClickOutside } from "@/hooks/useClickOutside";
@@ -73,46 +78,17 @@ function formatoFecha(fecha: Date): string {
   return `${anio}-${mes}-${dia}`;
 }
 
-const NOMBRES_MES = [
-  "Enero",
-  "Febrero",
-  "Marzo",
-  "Abril",
-  "Mayo",
-  "Junio",
-  "Julio",
-  "Agosto",
-  "Septiembre",
-  "Octubre",
-  "Noviembre",
-  "Diciembre",
-];
-
 // The human-readable label between the ← → arrows — not the same string as
 // formatoFecha above, which builds an API query param, not display text.
 function formatearRangoVisible(modo: Modo, fecha: Date): string {
-  if (modo === "DIARIO") {
-    return `${fecha.getDate()} ${NOMBRES_MES[fecha.getMonth()]}, ${fecha.getFullYear()}`;
-  }
+  if (modo === "DIARIO") return formatearDia(fecha);
 
   if (modo === "SEMANAL") {
     const inicio = getMonday(fecha);
-    const fin = addDays(inicio, 6);
-    const mismoAnio = inicio.getFullYear() === fin.getFullYear();
-    const mismoMes = mismoAnio && inicio.getMonth() === fin.getMonth();
-
-    if (mismoMes) {
-      return `${inicio.getDate()}-${fin.getDate()} ${NOMBRES_MES[inicio.getMonth()]}, ${inicio.getFullYear()}`;
-    }
-
-    if (mismoAnio) {
-      return `${inicio.getDate()} ${NOMBRES_MES[inicio.getMonth()]} - ${fin.getDate()} ${NOMBRES_MES[fin.getMonth()]}, ${inicio.getFullYear()}`;
-    }
-
-    return `${inicio.getDate()} ${NOMBRES_MES[inicio.getMonth()]}, ${inicio.getFullYear()} - ${fin.getDate()} ${NOMBRES_MES[fin.getMonth()]}, ${fin.getFullYear()}`;
+    return formatearRango(inicio, addDays(inicio, 6));
   }
 
-  return `${NOMBRES_MES[fecha.getMonth()]}, ${fecha.getFullYear()}`;
+  return formatearMes(fecha);
 }
 
 export default function CalendarioView({ empleados, isStaff }: Props) {
