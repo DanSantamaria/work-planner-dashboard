@@ -6,25 +6,39 @@ import type { ReactNode } from "react";
 // (task assignments vs. calendar events) — only the wrapper and header
 // styling repeat enough across views to share.
 
-// Deliberately NOT a scroll container. Sticky positions itself against the
-// nearest scrolling ancestor, so any overflow here would capture the header
-// row and the frozen name column, pinning them to a box that never moves —
-// i.e. no sticking at all. Scrolling (both axes) belongs to <main> in the
-// layout, which is what lets the header ride up with the page and stop under
-// the top bar. The cost, accepted knowingly: a month too wide for the screen
-// scrolls the page title and toolbar sideways along with it.
+// The wrapper is a scroll container on phones and not one from md up, and
+// that split is the whole point.
+//
+// Sticky positions itself against the nearest scrolling ancestor. On desktop
+// there is no overflow here, so scrolling belongs to <main> and the header
+// rides up with the page and parks under the top bar; the price is that a
+// month too wide for the screen drags the title and toolbar sideways with it.
+// On a phone that price is unpayable — every table is wider than the screen —
+// so below md the box scrolls sideways by itself and the header gives up
+// sticking. The frozen name column keeps working in both: it sticks
+// horizontally against whichever container is doing the scrolling.
 export function GridTable({
   children,
   textoClase = "text-sm",
   layoutClase = "",
+  anchoClase = "w-full",
 }: {
   children: ReactNode;
   textoClase?: string;
   layoutClase?: string;
+  /**
+   * Defaults to filling its container. Views with many columns pass `w-auto`
+   * so the columns keep the width they ask for instead of being squeezed to
+   * fit — the table then grows past the screen and scrolls, which is the
+   * point.
+   */
+  anchoClase?: string;
 }) {
   return (
-    <div className="rounded-2xl">
-      <table className={`w-full border-collapse ${textoClase} ${layoutClase}`}>
+    <div className="overflow-x-auto rounded-2xl md:overflow-visible">
+      <table
+        className={`border-collapse ${anchoClase} ${textoClase} ${layoutClase}`}
+      >
         {children}
       </table>
     </div>
@@ -37,23 +51,32 @@ type NombreHeaderCellProps = {
   stickyLeftClase?: string;
   paddingClase?: string;
   textoClase?: string;
+  /** Frozen against horizontal scrolling. False for a second identity column
+      that rides along with the days instead of holding the left edge. */
+  fijo?: boolean;
 };
 
-// Also reused for Semana's extra sticky "Horario" column — same sticky/
-// bg/text treatment, just a different width and left offset. Sticky on both
-// axes (it is the corner where the frozen column meets the frozen header),
-// hence the highest z of the three: above the day headers (z-20) and above
-// the body's frozen name cells (z-10).
+// Also reused for Semana's "Horario" column, which shares the bg/text
+// treatment but is not frozen (fijo={false}).
+//
+// When frozen it is sticky on both axes — the corner where the frozen column
+// meets the frozen header — so it takes the highest z of the three: above the
+// day headers (z-20) and above the body's frozen name cells (z-10).
 export function NombreHeaderCell({
   children,
   anchoClase = "w-48",
   stickyLeftClase = "left-0",
   paddingClase = "px-4 py-3",
   textoClase = "text-lg",
+  fijo = true,
 }: NombreHeaderCellProps) {
+  const posicionClase = fijo
+    ? `sticky md:-top-0.5 ${stickyLeftClase} z-30`
+    : "md:sticky md:-top-0.5 md:z-20";
+
   return (
     <th
-      className={`sticky -top-0.5 ${stickyLeftClase} z-30 ${anchoClase} border border-gray-300 bg-table-header text-left text-gray-800 ${paddingClase} ${textoClase}`}
+      className={`${posicionClase} ${anchoClase} border border-gray-300 bg-table-header text-left text-gray-800 ${paddingClase} ${textoClase}`}
     >
       {children}
     </th>
@@ -82,7 +105,7 @@ export function DiaHeaderCell({
 }: DiaHeaderCellProps) {
   return (
     <th
-      className={`sticky -top-0.5 z-20 whitespace-nowrap border border-gray-300 bg-table-header text-center text-gray-800 ${anchoClase} ${paddingClase} ${
+      className={`md:sticky md:-top-0.5 md:z-20 whitespace-nowrap border border-gray-300 bg-table-header text-center text-gray-800 ${anchoClase} ${paddingClase} ${
         hoy ? "border-t-4 border-t-sidebar" : ""
       }`}
     >

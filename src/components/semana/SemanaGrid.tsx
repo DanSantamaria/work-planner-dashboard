@@ -140,12 +140,20 @@ export default function SemanaGrid({
       ? todosLosDias
       : todosLosDias.filter((day) => day.diaSemana === diaVisible);
 
+  // table-fixed splits the available width between the declared columns, so
+  // without a floor it squeezes five days into a phone instead of overflowing.
+  // The minimum is what the columns need to stay readable; past that the
+  // wrapper takes over and scrolls sideways. Día needs far less, so it says so
+  // — otherwise a single column would scroll for no reason.
+  const anchoMinimoClase =
+    diaVisible === undefined ? "min-w-[56rem]" : "min-w-[26rem]";
+
   return (
-    <GridTable layoutClase="table-fixed">
+    <GridTable layoutClase={`table-fixed ${anchoMinimoClase}`}>
       <thead>
         <tr>
-          <NombreHeaderCell anchoClase="w-56">Nombre</NombreHeaderCell>
-          <NombreHeaderCell anchoClase="w-32" stickyLeftClase="left-56">
+          <NombreHeaderCell anchoClase="w-36 md:w-56">Nombre</NombreHeaderCell>
+          <NombreHeaderCell anchoClase="w-24 md:w-32" fijo={false}>
             Horario
           </NombreHeaderCell>
           {weekDays.map((day) => (
@@ -164,7 +172,7 @@ export default function SemanaGrid({
           return (
             <tr key={empleado.id} className="group bg-white hover:bg-row-hover">
               <td
-                className={`w-56 border border-gray-300 bg-white pl-6 pr-2 font-semibold text-gray-700 group-hover:bg-row-hover ${getLobBorderClass(empleado.lob)}`}
+                className={`sticky left-0 z-10 w-36 border border-gray-300 bg-white pl-6 pr-2 font-semibold text-gray-700 group-hover:bg-row-hover md:w-56 ${getLobBorderClass(empleado.lob)}`}
               >
                 {editable ? (
                   <CeldaEditable
@@ -175,7 +183,7 @@ export default function SemanaGrid({
                   empleado.nombre
                 )}
               </td>
-              <td className="sticky left-56 z-10 w-32 border border-gray-300 bg-white px-4 py-2 text-gray-600 group-hover:bg-row-hover">
+              <td className="w-24 border border-gray-300 bg-white px-2 py-2 text-gray-600 group-hover:bg-row-hover md:w-32 md:px-4">
                 {editable ? (
                   <CeldaEditable
                     valor={empleado.horario}

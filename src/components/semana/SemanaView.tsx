@@ -9,6 +9,7 @@ import NuevaSemanaModal from "@/components/semana/NuevaSemanaModal";
 import { addDays } from "@/lib/date-utils";
 import { formatearDia, formatearRango } from "@/lib/formato-fecha";
 import { useBusqueda } from "@/context/BusquedaContext";
+import { useEsMovil } from "@/hooks/useEsMovil";
 import { ordenarEmpleadosFlat } from "@/lib/orden-empleados";
 import {
   agruparAsignaciones,
@@ -113,7 +114,13 @@ export default function SemanaView({
   const [selectedWeekId, setSelectedWeekId] = useState<string | null>(
     semanaInicialId
   );
-  const [vista, setVista] = useState<Vista>("SEMANA");
+  // Five columns don't fit a phone; one does. Rather than forcing a view on
+  // mount, the choice stays empty until someone makes one, and until then the
+  // screen width decides — so the default follows a rotation, and an explicit
+  // pick is never overridden behind the user's back.
+  const esMovil = useEsMovil();
+  const [vistaElegida, setVistaElegida] = useState<Vista | null>(null);
+  const vista: Vista = vistaElegida ?? (esMovil ? "DIA" : "SEMANA");
   // 1..5 — same numbering the assignments use, never JS's getDay().
   const [diaSeleccionado, setDiaSeleccionado] = useState(diaSemanaDeHoy);
   const [editMode, setEditMode] = useState(false);
@@ -125,6 +132,11 @@ export default function SemanaView({
   const [showModal, setShowModal] = useState(false);
   const [creandoSemana, setCreandoSemana] = useState(false);
 
+  // Five columns don't fit a phone; one does. The switch happens after
+  // mounting rather than during render because the server has no idea how
+  // wide the screen is — deciding it while rendering would make the server's
+  // HTML and the browser's first render disagree. Runs once on purpose: from
+  // then on, the view is whatever the person chose.
   const semanaActual = semanas.find((s) => s.id === selectedWeekId) ?? null;
   const currentIndex = semanas.findIndex((s) => s.id === selectedWeekId);
 
@@ -472,7 +484,7 @@ export default function SemanaView({
           <button
             onClick={irAnterior}
             disabled={!hayAnterior}
-            className="cursor-pointer text-lg text-accent hover:opacity-75 disabled:cursor-not-allowed disabled:opacity-30"
+            className="cursor-pointer px-2 py-1 text-lg text-accent hover:opacity-75 disabled:cursor-not-allowed disabled:opacity-30"
           >
             ◄
           </button>
@@ -486,7 +498,7 @@ export default function SemanaView({
           <button
             onClick={irSiguiente}
             disabled={!haySiguiente}
-            className="cursor-pointer text-lg text-accent hover:opacity-75 disabled:cursor-not-allowed disabled:opacity-30"
+            className="cursor-pointer px-2 py-1 text-lg text-accent hover:opacity-75 disabled:cursor-not-allowed disabled:opacity-30"
           >
             ►
           </button>
@@ -511,7 +523,7 @@ export default function SemanaView({
               etiqueta: ETIQUETAS_VISTA[v],
             }))}
             valor={vista}
-            onChange={setVista}
+            onChange={setVistaElegida}
           />
         </div>
 
