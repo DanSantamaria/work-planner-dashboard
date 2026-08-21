@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { Settings, LogOut, Search } from "lucide-react";
+import { Settings, LogOut, Search, Menu } from "lucide-react";
 import type { Role } from "@/generated/prisma/browser";
 import { useBusqueda } from "@/context/BusquedaContext";
 import { useClickOutside } from "@/hooks/useClickOutside";
@@ -22,7 +22,14 @@ const SEARCH_PLACEHOLDERS: Record<string, string> = {
   "/calendario": "Buscar empleado o evento...",
 };
 
-export default function Header({ user }: { user: HeaderUser | null }) {
+export default function Header({
+  user,
+  onAbrirMenu,
+}: {
+  user: HeaderUser | null;
+  /** Opens the sidebar drawer — the only way to reach navigation below `md`. */
+  onAbrirMenu: () => void;
+}) {
   const { busqueda, setBusqueda } = useBusqueda();
   const [mostrarPopover, setMostrarPopover] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -39,8 +46,23 @@ export default function Header({ user }: { user: HeaderUser | null }) {
   )?.[1];
 
   return (
-    <header className="flex h-16 items-center justify-between gap-4 border-b bg-white px-8">
-      <p className="shrink-0 text-4xl font-bold text-gray-800">Bienvenido</p>
+    <header className="flex h-16 items-center justify-between gap-3 border-b bg-white px-4 md:gap-4 md:px-8">
+      {/* Phones only: with the sidebar parked off-screen this button is the
+          entire navigation, so it comes first and stays finger-sized. */}
+      <button
+        type="button"
+        onClick={onAbrirMenu}
+        aria-label="Abrir menú"
+        className="-ml-2 shrink-0 cursor-pointer rounded-lg p-2 text-gray-600 hover:text-gray-900 md:hidden"
+      >
+        <Menu size={24} />
+      </button>
+
+      {/* Decorative, and the widest thing in the header — the search box needs
+          that room more than the greeting does. */}
+      <p className="hidden shrink-0 text-4xl font-bold text-gray-800 md:block">
+        Bienvenido
+      </p>
 
       <div className="max-w-md flex-1">
         {searchPlaceholder && (
@@ -61,14 +83,15 @@ export default function Header({ user }: { user: HeaderUser | null }) {
 
       {user ? (
         <div className="flex shrink-0 items-center gap-4">
-          <div className="text-right">
+          <div className="hidden text-right md:block">
             <p className="text-sm font-bold text-gray-800">{user.name}</p>
             <p className="text-xs text-gray-400">{user.role}</p>
           </div>
           <button
             type="button"
             onClick={() => signOut({ callbackUrl: "/login" })}
-            className="flex cursor-pointer items-center gap-2 text-gray-500 hover:text-red-500"
+            aria-label="Cerrar sesión"
+            className="-mr-2 flex cursor-pointer items-center gap-2 rounded-lg p-2 text-gray-500 hover:text-red-500"
           >
             <LogOut size={18} />
           </button>
