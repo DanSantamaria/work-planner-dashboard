@@ -103,6 +103,13 @@ type TareaDisponible = { id: string; nombre: string };
 
 type Props = {
   fechaInicio: string;
+  /**
+   * When set (1..5), only that weekday's column is rendered — the daily view.
+   * Filtering the column out beats hiding it with CSS: the table is
+   * `table-fixed`, so a hidden column would still reserve its width and leave
+   * a wide empty gap next to the single day.
+   */
+  diaVisible?: number;
   empleados: { id: string; nombre: string; lob: string; horario: string }[];
   tareas: Record<string, Record<number, AsignacionCelda[]>>;
   editable?: boolean;
@@ -118,6 +125,7 @@ type Props = {
 
 export default function SemanaGrid({
   fechaInicio,
+  diaVisible,
   empleados,
   tareas,
   editable = false,
@@ -126,7 +134,11 @@ export default function SemanaGrid({
   onHorarioChange,
   onTareasChange,
 }: Props) {
-  const weekDays = getWeekDays(fechaInicio);
+  const todosLosDias = getWeekDays(fechaInicio);
+  const weekDays =
+    diaVisible === undefined
+      ? todosLosDias
+      : todosLosDias.filter((day) => day.diaSemana === diaVisible);
 
   return (
     <GridTable layoutClase="table-fixed">
