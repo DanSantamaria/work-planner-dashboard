@@ -10,9 +10,11 @@ type Tarea = { id: string; nombre: string };
 // natural home — GridTable's wrapper — has overflow-x-auto, and a container
 // that clips one axis clips the other too. Inside the table, a week filtered
 // down to a single employee left the panel ~60px tall and beheaded. Out here
-// its size is its own business, so these stay fixed no matter how many rows
-// the table happens to be showing.
-const ALTURA_PANEL = 320; // == h-80 below; keep both in sync
+// its size is its own business: it asks for the same height no matter how many
+// rows the filtered table left behind, and only gives ground when the window
+// itself hasn't got the room.
+const ALTURA_PANEL = 320; // preferred height; shrinks when the window can't give it
+const ALTURA_MINIMA = 160; // below this, scrolling a list this short is worse than nothing
 const ANCHO_PANEL = 256; // == w-64 below
 const SEPARACION = 4; // gap between button and panel
 const MARGEN_VENTANA = 8; // never let the panel touch the viewport edge
@@ -47,9 +49,11 @@ export default function TareaDropdown({
   // Position doubles as the open flag: a portalled panel is positioned from
   // the button's on-screen rectangle, so there is no "open but unpositioned"
   // state worth representing.
-  const [posicion, setPosicion] = useState<{ top: number; left: number } | null>(
-    null
-  );
+  const [posicion, setPosicion] = useState<{
+    top: number;
+    left: number;
+    alto: number;
+  } | null>(null);
   const abierto = posicion !== null;
   const contenedorRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -86,22 +90,28 @@ export default function TareaDropdown({
     if (!rect) return;
 
     // Flip up only when the viewport has no room below *and* there is more
-    // room above — measured against the window now, not against the table,
-    // which was the other half of the original bug.
-    const espacioAbajo = window.innerHeight - rect.bottom;
-    const espacioArriba = rect.top;
+    // room above — measured against the window, not against the table, which
+    // was the other half of the original bug.
+    const espacioAbajo = window.innerHeight - rect.bottom - SEPARACION - MARGEN_VENTANA;
+    const espacioArriba = rect.top - SEPARACION - MARGEN_VENTANA;
     const haciaArriba =
-      espacioAbajo < ALTURA_PANEL + MARGEN_VENTANA && espacioArriba > espacioAbajo;
+      espacioAbajo < ALTURA_PANEL && espacioArriba > espacioAbajo;
+
+    // A phone in landscape, or any screen with the keyboard up, may not have
+    // 320px anywhere. Take what the chosen side actually offers (never below
+    // a floor) instead of overflowing off-screen.
+    const espacioElegido = haciaArriba ? espacioArriba : espacioAbajo;
+    const alto = Math.max(ALTURA_MINIMA, Math.min(ALTURA_PANEL, espacioElegido));
 
     const top = haciaArriba
-      ? Math.max(MARGEN_VENTANA, rect.top - ALTURA_PANEL - SEPARACION)
+      ? Math.max(MARGEN_VENTANA, rect.top - alto - SEPARACION)
       : rect.bottom + SEPARACION;
     const left = Math.max(
       MARGEN_VENTANA,
       Math.min(rect.left, window.innerWidth - ANCHO_PANEL - MARGEN_VENTANA)
     );
 
-    setPosicion({ top, left });
+    setPosicion({ top, left, alto });
   }
 
   const ausenteId = tareasDisponibles.find((t) => t.nombre === "AUSENTE")?.id;
@@ -168,8 +178,12 @@ export default function TareaDropdown({
             ref={panelRef}
             // Inline style, not Tailwind classes: these two numbers are
             // measured at click time and can't be known ahead of build.
-            style={{ top: posicion.top, left: posicion.left }}
-            className="fixed z-50 h-80 w-64 overflow-y-auto rounded-lg border border-gray-300 bg-white p-2 shadow-lg"
+            style={{
+              top: posicion.top,
+              left: posicion.left,
+              height: posicion.alto,
+            }}
+            className="fixed z-50 w-64 overflow-y-auto rounded-lg border border-gray-300 bg-white p-2 shadow-lg"
           >
             {tareasDisponibles.map((tarea) => {
               const esAusente = tarea.id === ausenteId;

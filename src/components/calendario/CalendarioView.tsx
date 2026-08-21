@@ -278,7 +278,7 @@ export default function CalendarioView({ empleados, isStaff }: Props) {
               <button
                 type="button"
                 onClick={() => setSelectorFechaAbierto((prev) => !prev)}
-                className="cursor-pointer text-sidebar hover:opacity-70"
+                className="cursor-pointer p-2 text-sidebar hover:opacity-70"
                 aria-label="Ir a una fecha"
               >
                 <Funnel size={18} />
