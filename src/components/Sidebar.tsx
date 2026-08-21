@@ -54,7 +54,12 @@ export default function Sidebar({ user }: { user: SidebarUser | null }) {
   return (
     <aside
       onClick={() => setExpandido((prev) => !prev)}
-      className={`flex flex-shrink-0 cursor-pointer flex-col bg-sidebar transition-all duration-200 ${
+      // relative + z-40 turns the whole sidebar into its own layer above page
+      // content — the calendar's sticky cells declare z-10/z-20 and would
+      // otherwise paint over anything the sidebar pops out (see the Ajustes
+      // popover below). Fixing it here, rather than only on the popover,
+      // means future sidebar menus start out on top too.
+      className={`relative z-40 flex flex-shrink-0 cursor-pointer flex-col bg-sidebar transition-all duration-200 ${
         expandido ? "w-64" : "w-16"
       }`}
     >
@@ -127,7 +132,7 @@ export default function Sidebar({ user }: { user: SidebarUser | null }) {
         </button>
 
         {mostrarPopover && (
-          <div className="absolute bottom-full left-2 mb-2 w-56 rounded-lg border border-gray-200 bg-white p-3 text-sm shadow-lg">
+          <div className="absolute bottom-full left-2 z-50 mb-2 w-56 rounded-lg border border-gray-200 bg-white p-3 text-sm shadow-lg">
             {user ? (
               <>
                 <p className="font-bold text-gray-800">{user.name}</p>

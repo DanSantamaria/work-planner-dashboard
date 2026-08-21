@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { addDays } from "@/lib/date-utils";
 import TareaDropdown from "@/components/semana/TareaDropdown";
 import Badge from "@/components/ui/Badge";
@@ -127,10 +127,9 @@ export default function SemanaGrid({
   onTareasChange,
 }: Props) {
   const weekDays = getWeekDays(fechaInicio);
-  const contenedorTablaRef = useRef<HTMLDivElement>(null);
 
   return (
-    <GridTable ref={contenedorTablaRef} layoutClase="table-fixed">
+    <GridTable layoutClase="table-fixed">
       <thead>
         <tr>
           <NombreHeaderCell anchoClase="w-56">Nombre</NombreHeaderCell>
@@ -151,9 +150,9 @@ export default function SemanaGrid({
       <tbody>
         {empleados.map((empleado) => {
           return (
-            <tr key={empleado.id} className="bg-white">
+            <tr key={empleado.id} className="group bg-white hover:bg-row-hover">
               <td
-                className={`w-56 border border-gray-300 bg-white pl-6 pr-2 font-semibold text-gray-700 ${getLobBorderClass(empleado.lob)}`}
+                className={`w-56 border border-gray-300 bg-white pl-6 pr-2 font-semibold text-gray-700 group-hover:bg-row-hover ${getLobBorderClass(empleado.lob)}`}
               >
                 {editable ? (
                   <CeldaEditable
@@ -164,7 +163,7 @@ export default function SemanaGrid({
                   empleado.nombre
                 )}
               </td>
-              <td className="sticky left-56 z-10 w-32 border border-gray-300 bg-white px-4 py-2 text-gray-600">
+              <td className="sticky left-56 z-10 w-32 border border-gray-300 bg-white px-4 py-2 text-gray-600 group-hover:bg-row-hover">
                 {editable ? (
                   <CeldaEditable
                     valor={empleado.horario}
@@ -189,7 +188,6 @@ export default function SemanaGrid({
                         onChange={(nuevasIds) =>
                           onTareasChange?.(empleado.id, day.diaSemana, nuevasIds)
                         }
-                        contenedorTablaRef={contenedorTablaRef}
                       />
                     ) : (
                       <div className="flex max-w-[220px] flex-wrap gap-1">

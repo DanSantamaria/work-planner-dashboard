@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Calendar1,
   CalendarPlus,
@@ -17,6 +18,7 @@ import { resolverCelda, resolverVarianteEvento } from "@/lib/calendario-celda";
 import type { FeriadoCalendario } from "@/lib/calendario-celda";
 import { ETIQUETAS } from "@/components/calendario/CeldaCalendario";
 import Button from "@/components/ui/Button";
+import SegmentedControl from "@/components/ui/SegmentedControl";
 import DayView from "@/components/calendario/DayView";
 import WeekGrid from "@/components/calendario/WeekGrid";
 import MonthGrid from "@/components/calendario/MonthGrid";
@@ -115,6 +117,7 @@ function formatearRangoVisible(modo: Modo, fecha: Date): string {
 
 export default function CalendarioView({ empleados, isStaff }: Props) {
   const { busqueda } = useBusqueda();
+  const router = useRouter();
   const [modo, setModo] = useState<Modo>("MENSUAL");
   const [fecha, setFecha] = useState(new Date());
   const [datos, setDatos] = useState<{
@@ -225,8 +228,16 @@ export default function CalendarioView({ empleados, isStaff }: Props) {
     setFecha(nuevaFecha);
   }
 
+  // Fired on both save and delete, from either tab of the modal. Two
+  // refreshes, because the screen reads from two different places: the
+  // counter re-runs the client fetch that paints the grid, while
+  // router.refresh() re-runs the page's server component so the balance
+  // table gets employees whose used-days/hours include this change.
+  // router.refresh() keeps all client state (open panel, current month),
+  // so nothing resets under the user.
   function handleGuardado() {
     setRefrescoContador((n) => n + 1);
+    router.refresh();
   }
 
   // Used by the "+ Evento"/"+ Feriado" dropdown items — both start empty
@@ -309,18 +320,15 @@ export default function CalendarioView({ empleados, isStaff }: Props) {
           </div>
         </div>
 
-        <div className="flex gap-2">
-          {(Object.keys(ETIQUETAS_MODO) as Modo[]).map((m) => (
-            <Button
-              key={m}
-              variant={modo === m ? "primary" : "ghost"}
-              size="sm"
-              onClick={() => setModo(m)}
-            >
-              {ETIQUETAS_MODO[m]}
-            </Button>
-          ))}
-        </div>
+        <SegmentedControl
+          etiquetaGrupo="Vista del calendario"
+          opciones={(Object.keys(ETIQUETAS_MODO) as Modo[]).map((m) => ({
+            valor: m,
+            etiqueta: ETIQUETAS_MODO[m],
+          }))}
+          valor={modo}
+          onChange={setModo}
+        />
 
         <div className="flex items-center gap-2">
           {isStaff && (
@@ -392,7 +400,7 @@ export default function CalendarioView({ empleados, isStaff }: Props) {
       >
         <div className="overflow-hidden">
           <div className="mb-6">
-            <BalanceTable initialEmpleados={empleados} isStaff={isStaff} />
+            <BalanceTable empleadosServidor={empleados} isStaff={isStaff} />
           </div>
         </div>
       </div>

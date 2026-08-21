@@ -51,11 +51,25 @@ export default function CeldaCalendario({ celda, onClick, compact = false }: Pro
 
   if (celda.evento) {
     const marca = <Marca variant={celda.evento.variant} compact={compact} />;
-    contenido = celda.evento.data.notas ? (
-      <Tooltip contenido={celda.evento.data.notas}>{marca}</Tooltip>
-    ) : (
-      marca
-    );
+
+    if (!celda.evento.data.notas) {
+      contenido = marca;
+    } else {
+      const conTooltip = (
+        <Tooltip contenido={celda.evento.data.notas}>{marca}</Tooltip>
+      );
+
+      // Tooltip's root is inline-block, so it shrinks to fit the dot and
+      // the dot's own mx-auto has no leftover space left to split — the
+      // centering has to happen one level up, on a full-width block that
+      // centers its inline content. Compact only: the badge variant is
+      // meant to sit left-aligned, exactly as it does without a note.
+      contenido = compact ? (
+        <span className="block text-center">{conTooltip}</span>
+      ) : (
+        conTooltip
+      );
+    }
   }
 
   if (!onClick) {
