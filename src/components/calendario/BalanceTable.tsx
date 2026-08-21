@@ -301,6 +301,9 @@ export default function BalanceTable({ empleadosServidor, isStaff }: Props) {
                 <TableRow key={empleado.id} index={index}>
                   {isStaff && (
                     <TableCell>
+                      {/* The icons stay 14px so the desktop table looks the
+                          same; the padding is what a finger actually aims at
+                          (~44px for the pair). */}
                       <div className="flex flex-col">
                         <button
                           type="button"
@@ -308,7 +311,7 @@ export default function BalanceTable({ empleadosServidor, isStaff }: Props) {
                           onClick={() =>
                             moverEmpleado(grupo.empleados, index, -1)
                           }
-                          className="cursor-pointer text-gray-400 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-20"
+                          className="cursor-pointer px-2 py-1 text-gray-400 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-20"
                           aria-label="Subir"
                         >
                           <ChevronUp size={14} />
@@ -319,7 +322,7 @@ export default function BalanceTable({ empleadosServidor, isStaff }: Props) {
                           onClick={() =>
                             moverEmpleado(grupo.empleados, index, 1)
                           }
-                          className="cursor-pointer text-gray-400 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-20"
+                          className="cursor-pointer px-2 py-1 text-gray-400 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-20"
                           aria-label="Bajar"
                         >
                           <ChevronDown size={14} />

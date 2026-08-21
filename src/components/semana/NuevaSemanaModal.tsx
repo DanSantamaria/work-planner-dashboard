@@ -27,9 +27,12 @@ export default function NuevaSemanaModal({
     }
   }
 
+  // Full-height sheet on a phone, centred card from md up: long forms (the
+  // evento one especially) need somewhere to scroll, and a centred card ends
+  // up half-hidden behind the on-screen keyboard.
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl">
+    <div className="fixed inset-0 z-40 flex bg-black/40 md:items-center md:justify-center">
+      <div className="flex h-full w-full flex-col overflow-y-auto bg-white p-6 md:h-auto md:max-h-[90vh] md:max-w-sm md:rounded-xl md:shadow-xl">
         <h2 className="text-lg font-bold text-gray-800 mb-2">Nueva Semana</h2>
         <p className="text-sm text-gray-500 mb-4">
           Elige cualquier día de la semana que quieres crear — se ajustará
