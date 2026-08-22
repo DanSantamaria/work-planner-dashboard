@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { Search } from "lucide-react";
 import { useClickOutside } from "@/hooks/useClickOutside";
 
 type Tarea = { id: string; nombre: string };
@@ -55,6 +56,7 @@ export default function TareaDropdown({
     alto: number;
   } | null>(null);
   const abierto = posicion !== null;
+  const [filtro, setFiltro] = useState("");
   const contenedorRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const previaARef = useRef<string[]>([]);
@@ -66,11 +68,21 @@ export default function TareaDropdown({
   // A fixed-position panel doesn't travel with the page: without this it
   // would hang in mid-air next to nothing as soon as anything scrolled.
   // Capture phase, because the scroll that matters is usually the table's or
-  // <main>'s, and those don't bubble to window.
+  // <main>'s, and those don't bubble to window — but capture also hears the
+  // panel's own list scrolling, which closed it the instant you tried to
+  // reach an option further down. Scrolls born inside the panel are its own
+  // business.
   useEffect(() => {
     if (!abierto) return;
 
-    const cerrar = () => setPosicion(null);
+    const cerrar = (e: Event) => {
+      const objetivo = e.target;
+      if (objetivo instanceof Node && panelRef.current?.contains(objetivo)) {
+        return;
+      }
+      setPosicion(null);
+    };
+
     window.addEventListener("scroll", cerrar, true);
     window.addEventListener("resize", cerrar);
 
@@ -85,6 +97,10 @@ export default function TareaDropdown({
       setPosicion(null);
       return;
     }
+
+    // Fresh every time: carrying the previous search over would hide most of
+    // the list for reasons the next person opening it can't see.
+    setFiltro("");
 
     const rect = contenedorRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -152,6 +168,11 @@ export default function TareaDropdown({
     seleccionadas.includes(t.id)
   );
 
+  const textoFiltro = filtro.trim().toLowerCase();
+  const tareasVisibles = textoFiltro
+    ? tareasDisponibles.filter((t) => t.nombre.toLowerCase().includes(textoFiltro))
+    : tareasDisponibles;
+
   return (
     <div ref={contenedorRef} className="relative min-h-[2rem]">
       <button
@@ -176,39 +197,65 @@ export default function TareaDropdown({
         createPortal(
           <div
             ref={panelRef}
-            // Inline style, not Tailwind classes: these two numbers are
-            // measured at click time and can't be known ahead of build.
+            // Inline style, not Tailwind classes: these numbers are measured
+            // at click time and can't be known ahead of build.
             style={{
               top: posicion.top,
               left: posicion.left,
               height: posicion.alto,
             }}
-            className="fixed z-50 w-64 overflow-y-auto rounded-lg border border-gray-300 bg-white p-2 shadow-lg"
+            // flex column so the search box holds its place while only the
+            // list underneath scrolls — a search field that scrolls out of
+            // view the moment you use it is worse than none.
+            className="fixed z-50 flex w-64 flex-col rounded-lg border border-gray-300 bg-white p-2 shadow-lg"
           >
-            {tareasDisponibles.map((tarea) => {
-              const esAusente = tarea.id === ausenteId;
-              const deshabilitada = ausenteSeleccionada && !esAusente;
+            <div className="relative shrink-0">
+              <Search
+                size={14}
+                className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-gray-400"
+              />
+              <input
+                value={filtro}
+                onChange={(e) => setFiltro(e.target.value)}
+                placeholder="Buscar tarea"
+                // No autofocus on purpose: on a phone it would throw the
+                // keyboard up over the list every time a cell is tapped.
+                className="w-full rounded border border-gray-200 py-1 pl-7 pr-2 text-sm text-gray-700 placeholder:text-gray-400 focus:border-sidebar focus:outline-none"
+              />
+            </div>
 
-              return (
-                <label
-                  key={tarea.id}
-                  className={`flex items-center gap-2 px-2 py-1 text-sm rounded ${
-                    deshabilitada
-                      ? "cursor-not-allowed text-gray-300"
-                      : "cursor-pointer text-gray-700 hover:bg-gray-50"
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={seleccionadas.includes(tarea.id)}
-                    disabled={deshabilitada}
-                    onChange={() => toggleTarea(tarea.id)}
-                    className="accent-sidebar"
-                  />
-                  {tarea.nombre}
-                </label>
-              );
-            })}
+            <hr className="my-2 shrink-0 border-gray-100" />
+
+            <div className="flex-1 overflow-y-auto">
+              {tareasVisibles.length === 0 && (
+                <p className="px-2 py-1 text-sm text-gray-400">Sin resultados</p>
+              )}
+
+              {tareasVisibles.map((tarea) => {
+                const esAusente = tarea.id === ausenteId;
+                const deshabilitada = ausenteSeleccionada && !esAusente;
+
+                return (
+                  <label
+                    key={tarea.id}
+                    className={`flex items-center gap-2 rounded px-2 py-1 text-sm ${
+                      deshabilitada
+                        ? "cursor-not-allowed text-gray-300"
+                        : "cursor-pointer text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={seleccionadas.includes(tarea.id)}
+                      disabled={deshabilitada}
+                      onChange={() => toggleTarea(tarea.id)}
+                      className="accent-sidebar"
+                    />
+                    {tarea.nombre}
+                  </label>
+                );
+              })}
+            </div>
           </div>,
           document.body
         )}
