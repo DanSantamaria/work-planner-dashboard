@@ -284,7 +284,12 @@ export default function CalendarioView({ empleados, isStaff }: Props) {
                 <Funnel size={18} />
               </button>
               {selectorFechaAbierto && (
-                <div className="absolute left-0 z-30 mt-1">
+                // Anchored under the funnel icon on desktop; on a phone
+                // that hangs it off the right edge, so it becomes a panel
+                // centred in the viewport instead. z-40 because the table's
+                // frozen "Nombre" corner sits at z-30 and, being later in the
+                // DOM, wins any tie.
+                <div className="fixed left-1/2 top-1/2 z-40 -translate-x-1/2 -translate-y-1/2 md:absolute md:left-0 md:top-auto md:mt-1 md:translate-x-0 md:translate-y-0">
                   <SelectorFecha
                     fecha={fecha}
                     modo={modo}
@@ -321,7 +326,7 @@ export default function CalendarioView({ empleados, isStaff }: Props) {
                 <ChevronDown size={16} />
               </Button>
               {menuNuevoAbierto && (
-                <div className="absolute right-0 z-30 mt-1 w-36 rounded-lg border border-gray-200 bg-white p-1 shadow-lg">
+                <div className="absolute right-0 z-40 mt-1 w-36 rounded-lg border border-gray-200 bg-white p-1 shadow-lg">
                   <button
                     type="button"
                     onClick={() => {
