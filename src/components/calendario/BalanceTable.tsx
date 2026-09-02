@@ -92,9 +92,11 @@ function BalanceCelda({
   if (editando) {
     return (
       <div className="flex items-center gap-2">
+        {/* No min: a balance can legitimately go negative (days or hours
+            taken beyond what was granted), so the only constraint left is
+            "must be a number". */}
         <Input
           type="number"
-          min={0}
           value={valorEdicion}
           onChange={(e) => onCambiarValor(e.target.value)}
           compact
@@ -173,8 +175,9 @@ export default function BalanceTable({ empleadosServidor, isStaff }: Props) {
     if (!edicion) return;
 
     const saldo = Number(valorEdicion);
-    if (isNaN(saldo) || saldo < 0) {
-      setError("El valor debe ser un número mayor o igual a cero");
+    // Number("") is 0, which would silently save an empty field as zero.
+    if (valorEdicion.trim() === "" || isNaN(saldo)) {
+      setError("El valor debe ser un número");
       return;
     }
 

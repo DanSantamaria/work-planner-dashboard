@@ -46,14 +46,19 @@ export async function PUT(request: Request, { params }: RouteContext) {
       return NextResponse.json({ error: "Turno inválido" }, { status: 400 });
     }
 
+    // Negatives are allowed here on purpose: these totals are edited via
+    // the balance shown on /calendario, and a balance goes below zero as
+    // soon as someone takes more days or hours than they were granted.
+    // Only "is it a finite number" is enforced. (ordenEnGrupo below is a
+    // position index, not a balance, so it stays non-negative.)
     for (const [campo, valor] of [
       ["diasVacaciones", diasVacaciones],
       ["horasExceso", horasExceso],
       ["horasMedicasTotal", horasMedicasTotal],
     ] as const) {
-      if (valor !== undefined && (typeof valor !== "number" || valor < 0)) {
+      if (valor !== undefined && !Number.isFinite(valor)) {
         return NextResponse.json(
-          { error: `${campo} debe ser un número mayor o igual a cero` },
+          { error: `${campo} debe ser un número` },
           { status: 400 }
         );
       }
