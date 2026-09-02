@@ -1,0 +1,880 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Manual del Supervisor — CAC Dashboard</title>
+<style>
+  @page { size: A4; margin: 17mm 15mm 15mm 15mm; }
+
+  :root {
+    --tinta: #211E2F;
+    --acento: #E9865C;
+    --gris: #5A5A5A;
+    --linea: #DDDDE3;
+    --suave: #F7F7F9;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  body {
+    margin: 0;
+    font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+    font-size: 10.2pt;
+    line-height: 1.5;
+    color: var(--tinta);
+  }
+
+  /* ---------- Portada ---------- */
+  .portada {
+    height: 252mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    page-break-after: always;
+  }
+  .portada .marca {
+    font-size: 9pt;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--acento);
+    font-weight: 700;
+    margin-bottom: 14mm;
+  }
+  .portada h1 {
+    font-size: 34pt;
+    line-height: 1.1;
+    margin: 0 0 6mm;
+    letter-spacing: -.02em;
+  }
+  .portada .sub {
+    font-size: 13pt;
+    color: var(--gris);
+    max-width: 120mm;
+    margin: 0 0 16mm;
+    line-height: 1.45;
+  }
+  .portada .regla {
+    height: 4px;
+    width: 46mm;
+    background: var(--acento);
+    margin-bottom: 16mm;
+  }
+  .portada .meta {
+    font-size: 9.5pt;
+    color: var(--gris);
+    border-top: 1px solid var(--linea);
+    padding-top: 5mm;
+  }
+  .portada .meta b { color: var(--tinta); font-weight: 600; }
+
+  /* ---------- Índice ---------- */
+  .indice { page-break-after: always; }
+  .indice ol { margin: 0; padding-left: 5mm; }
+  .indice > ol > li {
+    font-weight: 700;
+    margin-bottom: 2.5mm;
+    padding-bottom: 2.5mm;
+    border-bottom: 1px solid var(--linea);
+  }
+  .indice ol ol {
+    font-weight: 400;
+    color: var(--gris);
+    margin-top: 1.5mm;
+    padding-left: 5mm;
+    font-size: 9.4pt;
+  }
+  .indice ol ol li { margin-bottom: .8mm; }
+
+  /* ---------- Estructura ---------- */
+  h2 {
+    font-size: 17pt;
+    margin: 0 0 4mm;
+    padding-bottom: 2.5mm;
+    border-bottom: 2px solid var(--tinta);
+    letter-spacing: -.01em;
+    page-break-after: avoid;
+  }
+  h2 .num {
+    color: var(--acento);
+    margin-right: 3mm;
+  }
+  h3 {
+    font-size: 12pt;
+    margin: 7mm 0 2.5mm;
+    page-break-after: avoid;
+  }
+  h4 {
+    font-size: 10.4pt;
+    margin: 5mm 0 2mm;
+    color: var(--gris);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    font-size: 8.8pt;
+    page-break-after: avoid;
+  }
+  section { page-break-before: always; }
+  section:first-of-type { page-break-before: avoid; }
+
+  p { margin: 0 0 3mm; }
+  ol, ul { margin: 0 0 3.5mm; padding-left: 6mm; }
+  li { margin-bottom: 1.4mm; }
+  ol li::marker { font-weight: 700; color: var(--acento); }
+  strong { font-weight: 700; }
+  code {
+    background: var(--suave);
+    border: 1px solid var(--linea);
+    border-radius: 3px;
+    padding: 0 3px;
+    font-family: "SF Mono", Menlo, monospace;
+    font-size: .88em;
+  }
+
+  /* ---------- Cajas ---------- */
+  .nota, .aviso, .rol {
+    padding: 3mm 4mm;
+    margin: 0 0 4mm;
+    border-radius: 4px;
+    font-size: 9.4pt;
+    page-break-inside: avoid;
+  }
+  .nota  { background: #F1F6FF; border-left: 4px solid #4A7BC8; }
+  .aviso { background: #FFF6D1; border-left: 4px solid #8A6D00; }
+  .rol   { background: var(--suave); border-left: 4px solid var(--acento); }
+  /* Solo el rótulo (primer <b> de la caja) va en su propia línea;
+     los <b> dentro del texto siguen siendo inline. */
+  .nota > b:first-child,
+  .aviso > b:first-child,
+  .rol > b:first-child { display: block; margin-bottom: 1mm; }
+  .nota p:last-child, .aviso p:last-child, .rol p:last-child { margin-bottom: 0; }
+
+  /* ---------- Tablas ---------- */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 0 4mm;
+    font-size: 9.3pt;
+    page-break-inside: avoid;
+  }
+  th {
+    background: var(--tinta);
+    color: #fff;
+    text-align: left;
+    padding: 2mm 2.5mm;
+    font-weight: 600;
+    font-size: 8.8pt;
+  }
+  td {
+    border-bottom: 1px solid var(--linea);
+    padding: 2mm 2.5mm;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: #FAFAFB; }
+
+  /* ---------- Insignias ---------- */
+  .pill {
+    display: inline-block;
+    font-size: 8.4pt;
+    padding: 1px 6px;
+    border-radius: 4px;
+    border: 1px solid;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .p-vac  { background:#D4F5DA; color:#1B7A3B; border-color:#1B7A3B; }
+  .p-vaca { background:#E8F5E9; color:#5A8F63; border-color:#5A8F63; }
+  .p-aus  { background:#FFE0E0; color:#E81414; border-color:#E81414; }
+  .p-inc  { background:#FFF6D1; color:#8A6D00; border-color:#8A6D00; }
+  .p-fer  { background:#F2F2F2; color:#5A5A5A; border-color:#5A5A5A; }
+  .p-ofi  { background:#C7FDFB; color:#5E8A88; border-color:#5E8A88; }
+  .p-rec  { background:#FFF6D1; color:#8A6D00; border-color:#8A6D00; }
+  .p-tar  { background:#FAFAFA; color:#3F3F46; border-color:#D4D4D8; }
+  .dot {
+    display: inline-block;
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    vertical-align: middle;
+  }
+  .d-vac{background:#1B7A3B}.d-vaca{background:#5A8F63}
+  .d-aus{background:#E81414}.d-inc{background:#8A6D00}
+
+  .swatch {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border-radius: 3px;
+    border: 1px solid rgba(0,0,0,.15);
+    vertical-align: middle;
+  }
+
+  .ruta {
+    display: inline-block;
+    background: var(--tinta);
+    color: #fff;
+    border-radius: 3px;
+    padding: 0 5px;
+    font-size: 8.6pt;
+    font-weight: 600;
+    letter-spacing: .02em;
+  }
+
+  .dosCol { display: flex; gap: 5mm; }
+  .dosCol > * { flex: 1; }
+
+  .pie {
+    margin-top: 8mm;
+    padding-top: 3mm;
+    border-top: 1px solid var(--linea);
+    font-size: 8.6pt;
+    color: var(--gris);
+  }
+</style>
+</head>
+<body>
+
+<!-- ================= PORTADA ================= -->
+<div class="portada">
+  <div class="marca">CAC Dashboard</div>
+  <h1>Manual del<br>Supervisor</h1>
+  <div class="regla"></div>
+  <p class="sub">Guía paso a paso para gestionar la planificación semanal y el calendario del equipo, con especial atención a la nueva sección <b>Calendario</b>.</p>
+  <div class="meta">
+    <p><b>Dirigido a:</b> supervisores y administradores del CAC</p>
+    <p><b>Nivel:</b> básico — no hace falta ningún conocimiento técnico</p>
+    <p><b>Versión del documento:</b> 1.0 · septiembre de 2026</p>
+  </div>
+</div>
+
+<!-- ================= ÍNDICE ================= -->
+<div class="indice">
+  <h2><span class="num">·</span>Contenido</h2>
+  <ol>
+    <li>Introducción: qué es la app y quién puede hacer qué</li>
+    <li>Cómo iniciar sesión</li>
+    <li>Navegación general: barra lateral y cabecera</li>
+    <li>El Calendario en detalle
+      <ol>
+        <li>Qué muestra la pantalla</li>
+        <li>La barra de herramientas</li>
+        <li>Las tres vistas: Día, Semana y Mes</li>
+        <li>Cómo interpretar los colores y las insignias</li>
+        <li>Cómo editar una celda</li>
+        <li>Cómo crear un evento</li>
+        <li>Cómo descontar horas de exceso o médicas</li>
+        <li>Cómo crear días feriados</li>
+        <li>Cómo funciona la tabla «Grupos y Totales»</li>
+        <li>Cómo crear y organizar grupos</li>
+      </ol>
+    </li>
+    <li>Planificación semanal: publicar y despublicar</li>
+    <li>Preguntas frecuentes y errores comunes</li>
+  </ol>
+</div>
+
+<!-- ================= 1 ================= -->
+<section>
+  <h2><span class="num">1</span>Introducción</h2>
+
+  <p><b>CAC Dashboard</b> es la herramienta interna donde el equipo consulta y organiza su trabajo. Tiene dos pantallas principales:</p>
+
+  <ol>
+    <li><b>Organización Semanal</b> <span class="ruta">/semana</span> — el reparto de tareas de lunes a viernes. Se prepara como borrador y se <b>publica</b> cuando está lista.</li>
+    <li><b>Calendario</b> <span class="ruta">/calendario</span> — la sección más nueva. Aquí se registran <b>vacaciones, ausencias e incidencias</b>, se marcan los <b>días feriados</b> y se consultan los <b>saldos</b> de días y horas de cada persona.</li>
+  </ol>
+
+  <p>Además hay tres pantallas de mantenimiento: <b>Empleados</b>, <b>Tareas</b> y <b>Usuarios</b>.</p>
+
+  <h3>Qué puede hacer cada rol</h3>
+
+  <p>Su rol aparece siempre escrito debajo de su nombre, arriba a la derecha de la pantalla.</p>
+
+  <table>
+    <thead>
+      <tr><th style="width:44%">Acción</th><th style="width:18%">Supervisor</th><th style="width:18%">Administrador</th><th style="width:20%">Sin sesión</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Ver la planificación semanal publicada</td><td>Sí</td><td>Sí</td><td>Sí</td></tr>
+      <tr><td>Ver semanas en borrador</td><td>Sí</td><td>Sí</td><td>No</td></tr>
+      <tr><td>Editar, guardar y <b>publicar</b> una semana</td><td>Sí</td><td>Sí</td><td>No</td></tr>
+      <tr><td>Eliminar una semana entera</td><td><b>No</b></td><td>Sí</td><td>No</td></tr>
+      <tr><td>Ver el calendario</td><td>Sí</td><td>Sí</td><td>Sí (solo lectura)</td></tr>
+      <tr><td>Crear y editar eventos y feriados</td><td>Sí</td><td>Sí</td><td>No</td></tr>
+      <tr><td>Editar saldos en «Grupos y Totales»</td><td>Sí</td><td>Sí</td><td>No</td></tr>
+      <tr><td>Gestionar Empleados, Grupos y Tareas</td><td>Sí</td><td>Sí</td><td>No</td></tr>
+      <tr><td>Gestionar Usuarios de la aplicación</td><td><b>No</b></td><td>Sí</td><td>No</td></tr>
+    </tbody>
+  </table>
+
+  <div class="rol">
+    <b>En resumen, si usted es Supervisor</b>
+    <p>Puede hacer prácticamente todo el trabajo del día a día. Las dos únicas cosas reservadas al Administrador son <b>eliminar una semana completa</b> y <b>gestionar los usuarios</b> que entran en la aplicación. Si necesita alguna de las dos, pídaselo a un administrador.</p>
+  </div>
+</section>
+
+<!-- ================= 2 ================= -->
+<section>
+  <h2><span class="num">2</span>Cómo iniciar sesión</h2>
+
+  <ol>
+    <li>Abra el navegador y entre en la dirección de la aplicación.</li>
+    <li>Si todavía no ha entrado, la aplicación le llevará sola a la pantalla <b>«Iniciar Sesión»</b>.</li>
+    <li>Escriba su <b>Email</b> en el primer campo.</li>
+    <li>Escriba su <b>Contraseña</b> en el segundo campo.</li>
+    <li>Pulse el botón naranja <b>«Entrar»</b>.</li>
+    <li>Al entrar correctamente aparecerá la pantalla <b>Planificación Semanal</b>. Ya está dentro.</li>
+  </ol>
+
+  <div class="aviso">
+    <b>Si aparece «Email o contraseña incorrectos»</b>
+    <p>Revise que no haya espacios de más al principio o al final del email y que las mayúsculas de la contraseña sean las correctas. Si sigue sin funcionar, pida a un administrador que revise su usuario desde la sección <b>Usuarios</b>.</p>
+  </div>
+
+  <h3>Cerrar sesión</h3>
+  <ol>
+    <li>Busque el icono de <b>salida</b> (una flecha saliendo de una puerta) en la esquina superior derecha.</li>
+    <li>Púlselo. Volverá a la pantalla de inicio de sesión.</li>
+  </ol>
+  <p>También puede hacerlo desde <b>Ajustes</b>, abajo del todo en la barra lateral: pulse <b>Ajustes</b> y luego <b>«Cerrar Sesión»</b>.</p>
+
+  <div class="nota">
+    <b>Consejo</b>
+    <p>Si comparte el ordenador con otras personas, cierre siempre la sesión al terminar. Mientras la sesión esté abierta, cualquiera puede crear o borrar eventos en su nombre.</p>
+  </div>
+</section>
+
+<!-- ================= 3 ================= -->
+<section>
+  <h2><span class="num">3</span>Navegación general</h2>
+
+  <h3>3.1 La barra lateral (izquierda)</h3>
+
+  <p>Es la columna oscura de la izquierda. Contiene el acceso a todas las secciones:</p>
+
+  <table>
+    <thead><tr><th style="width:32%">Icono y nombre</th><th>Para qué sirve</th><th style="width:22%">Quién lo ve</th></tr></thead>
+    <tbody>
+      <tr><td><b>Organización Semanal</b></td><td>Reparto de tareas de lunes a viernes</td><td>Todos</td></tr>
+      <tr><td><b>Calendario</b></td><td>Vacaciones, ausencias, incidencias, feriados y saldos</td><td>Todos</td></tr>
+      <tr><td><b>Empleados</b></td><td>Alta y edición de personas, y creación de <b>grupos</b></td><td>Supervisor y Admin</td></tr>
+      <tr><td><b>Tareas</b></td><td>Catálogo de tareas asignables en la semana</td><td>Supervisor y Admin</td></tr>
+      <tr><td><b>Usuarios</b></td><td>Quién puede entrar en la aplicación y con qué rol</td><td>Solo Admin</td></tr>
+    </tbody>
+  </table>
+
+  <p><b>Cosas útiles de la barra lateral:</b></p>
+  <ol>
+    <li>La sección en la que está ahora aparece en <b>color naranja</b>.</li>
+    <li>Por defecto la barra está <b>estrecha</b> y solo muestra los iconos. Pulse sobre la barra (o sobre la flecha que hay bajo el logotipo) para <b>ensancharla</b> y ver los nombres.</li>
+    <li>Abajo del todo está <b>Ajustes</b>: al pulsarlo se abre un pequeño recuadro con su nombre, su rol y el botón <b>«Cerrar Sesión»</b>.</li>
+  </ol>
+
+  <h3>3.2 La cabecera (arriba)</h3>
+
+  <ol>
+    <li>A la izquierda, la palabra <b>«Bienvenido»</b>.</li>
+    <li>En el centro, el <b>buscador</b>. Cambia según la sección: en el calendario busca por <b>empleado o evento</b>; en la semana, por <b>empleado o tarea</b>.</li>
+    <li>A la derecha, su <b>nombre</b> y su <b>rol</b>, y el botón de <b>cerrar sesión</b>.</li>
+  </ol>
+
+  <div class="nota">
+    <b>Sobre el buscador</b>
+    <p>Escriba y la lista se filtra sola: no hay que pulsar «Intro». En el calendario, escribir por ejemplo <code>Vacaciones</code> deja a la vista solo a quienes tengan ese tipo de evento en el periodo que está mirando. El buscador <b>se vacía solo</b> cada vez que cambia de sección.</p>
+  </div>
+
+  <h3>3.3 Desde el móvil</h3>
+  <ol>
+    <li>La barra lateral queda oculta. Pulse el icono <b>☰</b> (tres rayas) de la esquina superior izquierda para abrirla.</li>
+    <li>Para cerrarla, pulse fuera de ella, pulse la flecha, o use la tecla <b>Esc</b>.</li>
+    <li>Las tablas anchas (sobre todo la vista <b>Mes</b>) se desplazan <b>hacia los lados</b> con el dedo. La columna de nombres queda fija.</li>
+  </ol>
+</section>
+
+<!-- ================= 4 ================= -->
+<section>
+  <h2><span class="num">4</span>El Calendario en detalle</h2>
+
+  <p>Entre desde la barra lateral, en <b>Calendario</b> <span class="ruta">/calendario</span>.</p>
+
+  <h3>4.1 Qué muestra la pantalla</h3>
+
+  <p>El calendario es una <b>cuadrícula</b>: cada <b>fila</b> es una persona y cada <b>columna</b> es un día. En el cruce de una fila con una columna (la «celda») se ve, de un vistazo, qué le pasa a esa persona ese día: si está de vacaciones, ausente, si tiene una incidencia, o si ese día está cerrado por ser fin de semana o feriado.</p>
+
+  <ol>
+    <li>La <b>columna de nombres</b> queda fija a la izquierda aunque se desplace hacia los lados.</li>
+    <li>Cada nombre lleva una <b>franja de color</b> a su izquierda que indica su LOB (España, Francia, Irlanda, Coordinación).</li>
+    <li>El <b>día de hoy</b> aparece resaltado en la fila de cabecera.</li>
+  </ol>
+
+  <h3>4.2 La barra de herramientas</h3>
+
+  <table>
+    <thead><tr><th style="width:30%">Control</th><th>Qué hace</th></tr></thead>
+    <tbody>
+      <tr><td><b>Hoy</b></td><td>Vuelve de golpe a la fecha de hoy.</td></tr>
+      <tr><td><b>◀ ▶</b></td><td>Avanza o retrocede. Se mueve de <b>día en día</b>, de <b>semana en semana</b> o de <b>mes en mes</b>, según la vista activa.</td></tr>
+      <tr><td><b>Texto naranja central</b></td><td>Indica qué periodo está viendo (por ejemplo «Septiembre, 2026»).</td></tr>
+      <tr><td><b>Icono de embudo</b></td><td>Abre un mini calendario para <b>saltar a una fecha concreta</b>. Permite cambiar de mes y de año. No se cierra al elegir un día: puede seguir navegando y elegir otra vez. Para cerrarlo, pulse fuera.</td></tr>
+      <tr><td><b>Día / Semana / Mes</b></td><td>Cambia la vista. Al entrar se abre siempre en <b>Mes</b>.</td></tr>
+      <tr><td><b>Evento ▾</b></td><td>Crea algo nuevo. Al pulsar aparecen dos opciones: <b>Evento</b> o <b>Feriado</b>. <i>Solo visible para supervisores y administradores.</i></td></tr>
+      <tr><td><b>Grupos y Totales</b></td><td>Despliega y repliega la tabla de saldos. Ver el apartado 4.9.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>4.3 Las tres vistas: Día, Semana y Mes</h3>
+
+  <table>
+    <thead><tr><th style="width:16%">Vista</th><th style="width:32%">Qué muestra</th><th>Cuándo conviene usarla</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>Día</b></td>
+        <td>Una sola columna. Además de la insignia, <b>toda la celda se tiñe</b> del color del evento.</td>
+        <td>Para revisar con detalle quién falta hoy y quién está disponible.</td>
+      </tr>
+      <tr>
+        <td><b>Semana</b></td>
+        <td>De <b>lunes a domingo</b>, con la <b>insignia completa</b> y su texto («Vacaciones», «Ausencia»...).</td>
+        <td>Es la vista más legible: se lee el texto de cada evento sin tener que recordar los colores.</td>
+      </tr>
+      <tr>
+        <td><b>Mes</b></td>
+        <td>Todos los días del mes. Por falta de espacio, cada evento se reduce a un <b>punto de color</b>.</td>
+        <td>Para tener la foto global del mes y detectar solapes de vacaciones.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="nota">
+    <b>¿Y la «vista de grupo»?</b>
+    <p>El calendario no tiene una vista de grupo propia. Los grupos se ven en el panel <b>«Grupos y Totales»</b>, que se despliega sobre el calendario con el botón del mismo nombre (apartado 4.9). La cuadrícula del calendario siempre ordena a las personas por turno y LOB, no por grupo.</p>
+  </div>
+
+  <h3>4.4 Cómo interpretar los colores y las insignias</h3>
+
+  <h4>En el Calendario</h4>
+
+  <table>
+    <thead><tr><th style="width:26%">Insignia</th><th style="width:12%">Punto (Mes)</th><th style="width:20%">Significa</th><th>Efecto sobre los saldos</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><span class="pill p-vac">Vacaciones</span></td>
+        <td><span class="dot d-vac"></span> verde intenso</td>
+        <td>Vacaciones del año actual</td>
+        <td>Resta <b>1 día</b> de vacaciones por cada día</td>
+      </tr>
+      <tr>
+        <td><span class="pill p-vaca">Vacaciones (año ant.)</span></td>
+        <td><span class="dot d-vaca"></span> verde apagado</td>
+        <td>Vacaciones arrastradas del año anterior</td>
+        <td>Resta <b>1 día</b> igual que las anteriores</td>
+      </tr>
+      <tr>
+        <td><span class="pill p-aus">Ausencia</span></td>
+        <td><span class="dot d-aus"></span> rojo</td>
+        <td>La persona no ha acudido</td>
+        <td><b>No resta nada</b></td>
+      </tr>
+      <tr>
+        <td><span class="pill p-inc">Incidencia</span></td>
+        <td><span class="dot d-inc"></span> amarillo</td>
+        <td>Cualquier otra anotación del día</td>
+        <td>Solo resta si se le registran horas</td>
+      </tr>
+      <tr>
+        <td><span class="swatch" style="background:#F2F2F2"></span> Celda gris</td>
+        <td>—</td>
+        <td>Día <b>cerrado</b>: fin de semana o feriado</td>
+        <td>Ninguno</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="aviso">
+    <b>Los dos verdes son distintos a propósito</b>
+    <p>El verde <b>intenso</b> son vacaciones del <b>año actual</b>; el verde <b>apagado</b>, las del <b>año anterior</b>. Ambos descuentan un día del mismo saldo: la diferencia es solo informativa. En la vista Mes, si dos puntos verdes le resultan difíciles de distinguir, cambie a la vista <b>Semana</b>, donde se lee el texto completo.</p>
+  </div>
+
+  <div class="nota">
+    <b>Una celda gris con una insignia encima</b>
+    <p>Un día puede estar cerrado <b>y</b> tener un evento a la vez (por ejemplo, alguien que trabaja los sábados). En ese caso la celda se ve gris con la insignia dibujada encima. No es un error.</p>
+  </div>
+
+  <p><b>Si un evento tiene notas</b>, al pasar el ratón por encima de la insignia (o del punto) aparece un pequeño recuadro con el texto de la nota.</p>
+
+  <h4>La franja de color junto al nombre (LOB)</h4>
+  <p>
+    <span class="swatch" style="background:#FFE0E0"></span> España y Fin de semana &nbsp;·&nbsp;
+    <span class="swatch" style="background:#D4E9FF"></span> Francia &nbsp;·&nbsp;
+    <span class="swatch" style="background:#F3FFED"></span> Irlanda &nbsp;·&nbsp;
+    <span class="swatch" style="background:#8B7FD9"></span> Coordinación
+  </p>
+
+  <h4>En la Organización Semanal</h4>
+  <p>Las tareas de la semana usan otro juego de insignias. Conviene conocerlas porque son las que más se confunden con las del calendario:</p>
+  <p>
+    <span class="pill p-ofi">OFICINA</span> presencial &nbsp;·&nbsp;
+    <span class="pill p-aus">AUSENTE</span> no acude &nbsp;·&nbsp;
+    <span class="pill p-rec">RECEPCION</span> turno de recepción &nbsp;·&nbsp;
+    <span class="pill p-tar"><b>CAMBIO TURNO</b></span> y demás tareas
+  </p>
+  <ol>
+    <li><b>AUSENTE</b> y <b>CAMBIO TURNO</b> se escriben en <b>negrita</b> para que salten a la vista.</li>
+    <li>Las celdas con <b>AUSENTE</b> llevan además una barra roja a la izquierda; las de <b>OFICINA</b>, una barra azul turquesa.</li>
+  </ol>
+
+  <h3>4.5 Cómo editar una celda</h3>
+
+  <p>En el calendario no se escribe directamente dentro de la celda: al pulsarla se abre una ventana con el formulario.</p>
+
+  <ol>
+    <li>Sitúese en la vista que prefiera (<b>Día</b>, <b>Semana</b> o <b>Mes</b>) y busque el cruce entre la <b>persona</b> y el <b>día</b> que quiere tocar.</li>
+    <li><b>Pulse la celda.</b> Se abre una ventana con dos pestañas: <b>Evento</b> y <b>Feriado</b>.</li>
+    <li>La ventana llega ya rellenada con esa persona y esa fecha, así que no hace falta buscarlas de nuevo.
+      <ul>
+        <li>Si la celda <b>ya tenía un evento</b>, se abre directamente para <b>editarlo</b>.</li>
+        <li>Si estaba <b>vacía</b>, se abre para <b>crear</b> uno nuevo.</li>
+      </ul>
+    </li>
+    <li>Haga los cambios y pulse <b>«Guardar»</b>. La ventana se cierra y el calendario y los saldos se actualizan solos.</li>
+    <li>Para salir sin guardar nada, pulse <b>«Cancelar»</b>.</li>
+  </ol>
+
+  <div class="aviso">
+    <b>Al editar un evento existente hay campos bloqueados</b>
+    <p>El <b>empleado</b>, el <b>tipo</b> y las <b>fechas</b> aparecen en gris y no se pueden cambiar. Si se ha equivocado en alguno de los tres, <b>elimine</b> el evento y créelo de nuevo. Sí puede cambiar las notas y los datos propios del tipo (origen de las vacaciones, si la ausencia está justificada, las horas de la incidencia).</p>
+  </div>
+
+  <div class="nota">
+    <b>Si las celdas no reaccionan al pulsarlas</b>
+    <p>Es que está viendo el calendario sin haber iniciado sesión, o con un rol sin permiso de edición. Inicie sesión como supervisor o administrador.</p>
+  </div>
+
+  <h3>4.6 Cómo crear un evento</h3>
+
+  <p>Un «evento» es cualquiera de las tres cosas que le pueden pasar a una persona un día concreto: <b>Vacaciones</b>, <b>Ausencia</b> o <b>Incidencia</b>.</p>
+
+  <h4>Pasos comunes</h4>
+  <ol>
+    <li>Pulse el botón <b>«Evento ▾»</b> de la barra superior y elija <b>«Evento»</b>. (O pulse directamente la celda del día y la persona, como en el apartado 4.5.)</li>
+    <li>En <b>«Empleado»</b>, elija la persona en la lista desplegable.</li>
+    <li>En <b>«Tipo»</b>, pulse una de las tres insignias: <span class="pill p-vac">Vacaciones</span> <span class="pill p-aus">Ausencia</span> <span class="pill p-inc">Incidencia</span>. La elegida se ve a todo color; las otras dos, apagadas.</li>
+    <li>Rellene <b>«Desde»</b> y <b>«Hasta»</b>. Para un solo día, ponga la misma fecha en los dos.</li>
+    <li>Complete el campo propio del tipo elegido (ver más abajo).</li>
+    <li>Si quiere, escriba algo en <b>«Notas»</b>. Es un texto interno; se mostrará al pasar el ratón por encima de la insignia.</li>
+    <li>Pulse <b>«Guardar»</b>.</li>
+  </ol>
+
+  <h4>Según el tipo elegido</h4>
+
+  <p><b>a) Vacaciones</b></p>
+  <ol>
+    <li>Aparece el bloque <b>«Origen»</b> con dos opciones: <b>Año actual</b> (marcada por defecto) o <b>Año anterior</b>.</li>
+    <li>Elija la que corresponda. Solo cambia el color con que se pinta en el calendario.</li>
+    <li>Al guardar, se descuenta <b>un día de vacaciones por cada día del rango</b>.</li>
+  </ol>
+
+  <div class="aviso">
+    <b>Muy importante con los rangos de vacaciones</b>
+    <p>El sistema cuenta <b>todos los días naturales</b> entre «Desde» y «Hasta», incluidos <b>sábados, domingos y feriados</b>. Si pone del lunes 1 al domingo 7, descontará <b>7 días</b>, no 5. Para descontar solo los laborables, cree el rango de lunes a viernes.</p>
+  </div>
+
+  <p><b>b) Ausencia</b></p>
+  <ol>
+    <li>Aparece el bloque <b>«Justificada»</b> con tres botones: <b>Sí</b>, <b>No</b> y <b>Pendiente</b>.</li>
+    <li>Use <b>Pendiente</b> mientras espera la explicación de la persona; podrá cambiarlo después editando el evento.</li>
+    <li>Las ausencias <b>no descuentan</b> días ni horas de ningún saldo, se marquen como se marquen.</li>
+  </ol>
+
+  <p><b>c) Incidencia</b></p>
+  <ol>
+    <li>Aparece la casilla <b>«¿Registrar horas?»</b>.</li>
+    <li>Si <b>no</b> la marca, queda como una simple anotación del día y no toca ningún saldo.</li>
+    <li>Si la marca, se descuentan horas. Vea el apartado siguiente.</li>
+  </ol>
+
+  <h3>4.7 Cómo descontar horas de exceso o médicas</h3>
+
+  <p>Las horas se descuentan siempre a través de una <b>Incidencia</b>. Hay dos bolsas independientes: las <b>horas de exceso</b> (compensación de horas trabajadas de más) y las <b>horas médicas</b>.</p>
+
+  <ol>
+    <li>Cree un evento como en el apartado 4.6 y elija el tipo <span class="pill p-inc">Incidencia</span>.</li>
+    <li>Ponga la <b>misma fecha</b> en «Desde» y en «Hasta».</li>
+    <li>Marque la casilla <b>«¿Registrar horas?»</b>. Se abren dos campos nuevos.</li>
+    <li>En la lista desplegable elija la bolsa de la que sale el tiempo:
+      <ul>
+        <li><b>Médica</b> → descuenta de <b>«Horas médicas»</b>.</li>
+        <li><b>Exceso</b> → descuenta de <b>«Horas exceso»</b>.</li>
+      </ul>
+    </li>
+    <li>En el campo <b>«Horas»</b> escriba la cantidad. Admite medias horas: <code>1</code>, <code>1.5</code>, <code>2</code>, <code>3.5</code>…</li>
+    <li>Pulse <b>«Guardar»</b>.</li>
+    <li>Compruebe el resultado abriendo <b>«Grupos y Totales»</b>: el saldo de esa persona en esa columna habrá bajado.</li>
+  </ol>
+
+  <div class="aviso">
+    <b>Una incidencia con horas ocupa un solo día</b>
+    <p>En cuanto marca «¿Registrar horas?», el campo «Hasta» se bloquea y se iguala al de «Desde». Si necesita descontar horas en varios días, cree una incidencia por cada día. Si intenta guardar un rango, saldrá el aviso <i>«Una nota con horas solo puede registrarse en un único día»</i>.</p>
+  </div>
+
+  <p><b>Para corregir o deshacer un descuento de horas:</b></p>
+  <ol>
+    <li>Pulse la celda de esa incidencia para abrirla.</li>
+    <li>Cambie la cantidad de horas o la bolsa (Médica / Exceso) y pulse <b>«Guardar»</b>: el saldo se recalcula solo.</li>
+    <li>O pulse <b>«Eliminar»</b> y confirme: las horas <b>se devuelven</b> automáticamente al saldo.</li>
+  </ol>
+
+  <h3>4.8 Cómo crear días feriados</h3>
+
+  <p>Un feriado afecta a <b>toda la plantilla</b>: pinta esa columna del calendario en gris para todo el mundo. No hace falta crear uno por persona.</p>
+
+  <ol>
+    <li>Pulse <b>«Evento ▾»</b> y elija <b>«Feriado»</b>. (También llega ahí pulsando cualquier celda y cambiando a la pestaña <b>«Feriado»</b>.)</li>
+    <li>Elija la <b>Fecha</b>.</li>
+    <li>Escriba el <b>Nombre</b>, por ejemplo <i>Fiesta Nacional de España</i> o <i>Puente decidido por la empresa</i>. Es obligatorio.</li>
+    <li>Pulse <b>«Guardar»</b>. La columna de ese día pasa a gris para todos.</li>
+  </ol>
+
+  <p><b>Para editar o eliminar un feriado:</b></p>
+  <ol>
+    <li>Pulse cualquier celda de ese día.</li>
+    <li>Cambie a la pestaña <b>«Feriado»</b>: se abre con los datos ya cargados.</li>
+    <li>Corrija el nombre o la fecha y pulse <b>«Guardar»</b>, o pulse <b>«Eliminar»</b> y confirme.</li>
+  </ol>
+
+  <div class="nota">
+    <b>Solo puede haber un feriado por fecha</b>
+    <p>Si intenta crear un segundo feriado el mismo día, aparecerá <i>«Ya existe un feriado en esa fecha»</i>. Edite el que ya existe en lugar de crear otro.</p>
+  </div>
+
+  <div class="aviso">
+    <b>Los feriados no descuentan vacaciones por su cuenta</b>
+    <p>Marcar un día como feriado <b>no</b> ajusta las vacaciones ya registradas. Si alguien tenía vacaciones ese día, ese día le sigue contando. Si no quiere que cuente, edite el rango de vacaciones de esa persona.</p>
+  </div>
+
+  <h3>4.9 Cómo funciona la tabla «Grupos y Totales»</h3>
+
+  <p>Es el panel donde se consulta y se corrige <b>cuánto le queda</b> a cada persona. Se despliega con el botón <b>«Grupos y Totales»</b> de la barra superior y se repliega pulsándolo otra vez.</p>
+
+  <h4>Cómo leerla</h4>
+  <ol>
+    <li>Las personas aparecen agrupadas bajo una <b>banda oscura</b> con el nombre de su grupo. Quien no tenga grupo asignado aparece al final, bajo <b>«Sin grupo»</b>.</li>
+    <li>Hay tres columnas de números: <b>Vacaciones (días)</b>, <b>Horas exceso</b> y <b>Horas médicas</b>.</li>
+    <li><b>El número que ve es el saldo que queda</b>, no el total del año. La aplicación ya ha restado todo lo consumido mediante eventos.</li>
+    <li>Los números <b>subrayados con puntitos</b> se pueden editar; si no lo están, es que su rol no tiene permiso.</li>
+  </ol>
+
+  <div class="nota">
+    <b>La cuenta que hace la tabla</b>
+    <p><b>Saldo mostrado = Total concedido − Consumido en eventos.</b> Por eso, cada vez que crea o borra unas vacaciones o una incidencia con horas, este número cambia solo. No hay que actualizarlo a mano.</p>
+  </div>
+
+  <h4>Cómo corregir un saldo</h4>
+  <ol>
+    <li>Despliegue <b>«Grupos y Totales»</b>.</li>
+    <li>Pulse sobre el <b>número</b> que quiere corregir. Se convierte en una casilla editable con los botones <b>Guardar</b> y <b>Cancelar</b>.</li>
+    <li>Escriba <b>el saldo que debe quedar</b>, no la cantidad a sumar o restar. Si alguien debe terminar con 12 días, escriba <code>12</code>.</li>
+    <li>Pulse <b>«Guardar»</b>.</li>
+  </ol>
+
+  <div class="nota">
+    <b>Se admiten números negativos</b>
+    <p>Puede escribir <code>-1</code>, <code>-3.5</code> o cualquier otro valor negativo. Un saldo negativo es una situación real y perfectamente válida: significa que esa persona ha consumido <b>más</b> días u horas de los que tenía concedidos. Se muestra tal cual, con su signo menos delante.</p>
+  </div>
+
+  <div class="aviso">
+    <b>Los días de vacaciones deben ser enteros</b>
+    <p>En la columna <b>Vacaciones (días)</b> escriba números enteros (<code>12</code>, <code>-1</code>). Las dos columnas de <b>horas</b> sí admiten decimales (<code>7.5</code>, <code>-2.5</code>).</p>
+  </div>
+
+  <h4>Cómo cambiar el orden de las personas dentro de un grupo</h4>
+  <ol>
+    <li>A la izquierda de cada fila hay dos flechas pequeñas, <b>▲</b> y <b>▼</b>.</li>
+    <li>Pulse <b>▲</b> para subir a esa persona una posición, o <b>▼</b> para bajarla.</li>
+    <li>El cambio se guarda solo y es <b>permanente</b>: así se verá la próxima vez que abra la tabla.</li>
+    <li>Las flechas aparecen apagadas cuando la persona ya está la primera o la última de su grupo.</li>
+  </ol>
+
+  <div class="nota">
+    <b>Este orden solo afecta a esta tabla</b>
+    <p>La cuadrícula del calendario (Día, Semana, Mes) siempre ordena por turno y LOB, no por grupo. Reordenar aquí no mueve las filas del calendario.</p>
+  </div>
+
+  <h3>4.10 Cómo crear y organizar grupos</h3>
+
+  <p>Los grupos se crean en <b>Empleados</b> <span class="ruta">/empleados</span>, y se ven reflejados en «Grupos y Totales».</p>
+
+  <h4>Crear un grupo</h4>
+  <ol>
+    <li>Entre en <b>Empleados</b> desde la barra lateral.</li>
+    <li>Pulse el botón <b>«+ Nuevo grupo»</b>.</li>
+    <li>Escriba el nombre, por ejemplo <i>Grupo 1</i>, <i>Supervisores</i> o <i>Fines de Semana y Nocturno</i>.</li>
+    <li>Pulse <b>«Guardar»</b>. El grupo aparece como una etiqueta bajo los botones.</li>
+  </ol>
+
+  <h4>Cambiar el nombre de un grupo</h4>
+  <ol>
+    <li>En la fila de etiquetas de grupos, pulse el <b>lápiz</b> azul junto al nombre.</li>
+    <li>Escriba el nombre nuevo y pulse <b>«Guardar»</b>.</li>
+  </ol>
+
+  <h4>Asignar personas a un grupo</h4>
+  <ol>
+    <li>En la tabla de empleados, localice a la persona.</li>
+    <li>En su columna <b>«Grupo»</b>, despliegue la lista y elija el grupo.</li>
+    <li>Se guarda solo, y la persona se coloca <b>al final</b> de ese grupo.</li>
+    <li>Para dejarla sin grupo, elija la opción vacía de la lista: pasará a «Sin grupo».</li>
+  </ol>
+
+  <h4>Ordenar</h4>
+  <ol>
+    <li>El <b>orden de las personas</b> dentro de cada grupo se ajusta con las flechas <b>▲ ▼</b> de «Grupos y Totales» (apartado 4.9).</li>
+    <li>El <b>orden de los grupos</b> entre sí es el orden en que fueron creados: el primero que creó aparece arriba.</li>
+  </ol>
+
+  <div class="nota">
+    <b>Los grupos no tienen efecto sobre los cálculos</b>
+    <p>Son solo una forma de organizar la lista para leerla mejor. No cambian saldos, ni permisos, ni el reparto de tareas.</p>
+  </div>
+</section>
+
+<!-- ================= 5 ================= -->
+<section>
+  <h2><span class="num">5</span>Publicar y despublicar</h2>
+
+  <div class="aviso">
+    <b>Esto no se hace en el Calendario</b>
+    <p>El calendario <b>no se publica</b>: todo lo que guarda ahí (eventos, feriados, saldos) es visible de inmediato. Publicar y despublicar solo existe en <b>Organización Semanal</b> <span class="ruta">/semana</span>, y sí está disponible para su rol de supervisor.</p>
+  </div>
+
+  <h3>Qué significa cada estado</h3>
+  <ol>
+    <li><b>Borrador 🟡</b> — está preparando la semana. Solo la ven supervisores y administradores.</li>
+    <li><b>Publicada 🟢</b> — la semana es visible para todo el mundo, también para quien entra sin iniciar sesión.</li>
+  </ol>
+  <p>El estado se lee siempre en la barra superior, a la derecha: <b>«Estado: Publicada 🟢»</b> o <b>«Estado: Borrador 🟡»</b>.</p>
+
+  <h3>Crear una semana nueva</h3>
+  <ol>
+    <li>Entre en <b>Organización Semanal</b>.</li>
+    <li>Pulse <b>«+ Nueva Semana»</b>.</li>
+    <li>Elija <b>cualquier día</b> de la semana que quiere crear y confirme. La aplicación la ajusta sola al <b>lunes</b> correspondiente.</li>
+    <li>La semana se crea <b>copiando las tareas de la semana más reciente</b>, para no partir de cero.</li>
+  </ol>
+
+  <h3>Publicar una semana</h3>
+  <ol>
+    <li>Sitúese en la semana correcta con las flechas <b>◄ ►</b>.</li>
+    <li>Pulse el icono del <b>lápiz</b> (a la derecha de la barra superior) para entrar en modo edición.</li>
+    <li>Ajuste las tareas que necesite. Aparecerá una barra de botones fija en la parte inferior.</li>
+    <li>Si quiere seguir trabajando más tarde, pulse <b>«Guardar Borrador»</b>.</li>
+    <li>Cuando esté lista, pulse el botón verde <b>«Publicar»</b>. Guarda los cambios y publica en un solo paso.</li>
+    <li>Compruebe que arriba a la derecha pone <b>«Estado: Publicada 🟢»</b>.</li>
+  </ol>
+
+  <h3>Despublicar una semana</h3>
+  <ol>
+    <li>Sitúese en la semana publicada.</li>
+    <li>Pulse el icono del <b>lápiz</b>.</li>
+    <li>En la barra inferior pulse <b>«Despublicar»</b>.</li>
+    <li>La semana vuelve a <b>Borrador 🟡</b> y deja de verse desde fuera. Nada de lo que había se pierde.</li>
+  </ol>
+
+  <div class="nota">
+    <b>Salir del modo edición</b>
+    <p>El icono del lápiz se convierte en una <b>✕</b> mientras edita. Si lo pulsa con cambios sin guardar, la aplicación le pedirá confirmación antes de descartarlos. Lo mismo ocurre si intenta cambiar de semana a media edición.</p>
+  </div>
+
+  <div class="aviso">
+    <b>«Eliminar Semana» es solo para administradores</b>
+    <p>Si su rol es Supervisor, ese botón no le aparecerá. Borrar una semana no se puede deshacer, así que está reservado al Administrador.</p>
+  </div>
+</section>
+
+<!-- ================= 6 ================= -->
+<section>
+  <h2><span class="num">6</span>Preguntas frecuentes y errores comunes</h2>
+
+  <h3>Permisos y accesos</h3>
+
+  <p><b>No veo el botón «Evento» y las celdas no reaccionan.</b><br>
+  No ha iniciado sesión, o su rol no permite editar. Compruebe que arriba a la derecha aparece su nombre con el rol <b>SUPERVISOR</b> o <b>ADMIN</b>.</p>
+
+  <p><b>No veo la sección «Usuarios».</b><br>
+  Es correcto: solo la ven los administradores.</p>
+
+  <p><b>No me aparece el botón «Eliminar Semana».</b><br>
+  También es correcto: eliminar semanas está reservado a los administradores. Pida ayuda a uno.</p>
+
+  <h3>Mensajes de error al guardar</h3>
+
+  <table>
+    <thead><tr><th style="width:44%">Mensaje</th><th>Qué hacer</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><i>«Ese empleado ya tiene un evento registrado en una de esas fechas»</i></td>
+        <td>Cada persona solo puede tener <b>un evento por día</b>. Busque el día en conflicto dentro del rango, abra el evento que ya existe y elimínelo o edítelo, y vuelva a intentarlo.</td>
+      </tr>
+      <tr>
+        <td><i>«Una nota con horas solo puede registrarse en un único día»</i></td>
+        <td>Ponga la misma fecha en «Desde» y «Hasta». Para varios días, cree una incidencia por día.</td>
+      </tr>
+      <tr>
+        <td><i>«Las horas deben ser un número mayor que cero»</i></td>
+        <td>El campo está vacío o tiene un 0. Escriba la cantidad, por ejemplo <code>1.5</code>.</td>
+      </tr>
+      <tr>
+        <td><i>«Ya existe un feriado en esa fecha»</i></td>
+        <td>Edite el feriado existente en vez de crear otro.</td>
+      </tr>
+      <tr>
+        <td><i>«El nombre del feriado es obligatorio»</i></td>
+        <td>Escriba un nombre descriptivo antes de guardar.</td>
+      </tr>
+      <tr>
+        <td><i>«La fecha de inicio no puede ser posterior a la fecha de fin»</i></td>
+        <td>Ha invertido las fechas. Corrija «Desde» y «Hasta».</td>
+      </tr>
+      <tr>
+        <td><i>«Ya existe un empleado con ese nombre»</i></td>
+        <td>Los nombres no se pueden repetir. Añada un apellido para diferenciarlos.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Sobre vacaciones y saldos</h3>
+
+  <p><b>He borrado unas vacaciones de una semana entera y solo ha desaparecido un día.</b><br>
+  Cada día de un rango es un evento independiente. Eliminar desde una celda borra <b>ese día</b> y devuelve <b>un día</b> al saldo. Repita en cada día del rango.</p>
+
+  <p><b>Ha descontado más días de los que esperaba.</b><br>
+  El rango cuenta <b>todos los días naturales</b>, incluidos fines de semana y feriados. Cree los rangos de lunes a viernes si solo quiere descontar laborables.</p>
+
+  <p><b>Un saldo aparece en negativo, con un signo menos.</b><br>
+  Es normal y está permitido: significa que se ha consumido más de lo concedido. Si es un error, corrija el número directamente en «Grupos y Totales».</p>
+
+  <p><b>Marqué una ausencia y no ha descontado nada.</b><br>
+  Correcto: las <b>ausencias no tocan ningún saldo</b>, esté justificada o no. Para descontar tiempo, use una <b>Incidencia</b> con horas.</p>
+
+  <p><b>Cambié las vacaciones de «Año actual» a «Año anterior» y el saldo no varió.</b><br>
+  También es correcto: el origen es solo una etiqueta de color. Ambos tipos descuentan del mismo saldo de días.</p>
+
+  <h3>Uso de la pantalla</h3>
+
+  <p><b>En la vista Mes no veo todos los días.</b><br>
+  Desplace la tabla <b>hacia los lados</b> (rueda del ratón con Mayús, o el dedo en el móvil). La columna de nombres queda siempre fija.</p>
+
+  <p><b>El buscador no encuentra a alguien.</b><br>
+  Filtra por nombre de persona o por el texto del evento o la tarea. Compruebe que está en el periodo correcto: en el calendario solo busca entre los eventos del periodo que tiene en pantalla. Cambiar de sección vacía el buscador.</p>
+
+  <p><b>Modifiqué un evento y el saldo de arriba no cambió.</b><br>
+  El panel se actualiza solo al guardar. Si no ocurre, cierre y vuelva a abrir «Grupos y Totales», o recargue la página con <b>F5</b>.</p>
+
+  <p><b>El mini calendario del embudo no se cierra al elegir un día.</b><br>
+  Es a propósito, para poder elegir varias veces seguidas. Pulse en cualquier punto fuera de él para cerrarlo.</p>
+
+  <div class="pie">
+    <b>¿Sigue atascado?</b> Anote qué estaba haciendo, el mensaje exacto que aparece en pantalla y la fecha y persona afectadas, y páselo al equipo técnico. Con esos tres datos la incidencia se resuelve mucho más rápido.
+  </div>
+</section>
+
+</body>
+</html>
