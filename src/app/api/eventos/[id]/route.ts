@@ -75,7 +75,8 @@ export async function PATCH(request: Request, { params }: RouteContext) {
           ...(notas !== undefined && { notas: notas?.trim() || null }),
           ...(existente.tipo === TipoEvento.VACACION &&
             origenVacacion !== undefined && { origenVacacion }),
-          ...(existente.tipo === TipoEvento.AUSENCIA &&
+          ...((existente.tipo === TipoEvento.AUSENCIA ||
+            existente.tipo === TipoEvento.NOTA) &&
             justificada !== undefined && { justificada }),
           ...(existente.tipo === TipoEvento.NOTA && {
             tipoHoras: tipoHorasNuevo,

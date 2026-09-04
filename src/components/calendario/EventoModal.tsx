@@ -89,6 +89,12 @@ export default function EventoModal({
   );
   const [notas, setNotas] = useState(eventoExistente?.notas ?? "");
 
+  // Ausencia and Incidencia both get triaged the same way, so they share
+  // one control, one column and one rule about when it is sent. Kept as a
+  // single derived flag so the render, the create body and the edit body
+  // can never drift apart on which types have a status.
+  const llevaJustificada = tipo === "AUSENCIA" || tipo === "NOTA";
+
   const [error, setError] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [eliminando, setEliminando] = useState(false);
@@ -140,7 +146,7 @@ export default function EventoModal({
       ? {
           notas: notas.trim() || null,
           ...(tipo === "VACACION" && { origenVacacion }),
-          ...(tipo === "AUSENCIA" && { justificada }),
+          ...(llevaJustificada && { justificada }),
           ...(tipo === "NOTA" && {
             tipoHoras: registrarHoras ? tipoHoras : null,
             horas: registrarHoras ? Number(horas) : null,
@@ -153,7 +159,7 @@ export default function EventoModal({
           fechaFin,
           notas: notas.trim() || null,
           ...(tipo === "VACACION" && { origenVacacion }),
-          ...(tipo === "AUSENCIA" && { justificada }),
+          ...(llevaJustificada && { justificada }),
           ...(tipo === "NOTA" &&
             registrarHoras && { tipoHoras, horas: Number(horas) }),
         };
@@ -310,7 +316,7 @@ export default function EventoModal({
           </div>
         )}
 
-        {tipo === "AUSENCIA" && (
+        {llevaJustificada && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Justificada

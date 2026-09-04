@@ -5,6 +5,14 @@ import { useState, type ReactNode } from "react";
 type Props = {
   contenido: ReactNode;
   children: ReactNode;
+  // Positioning classes for the root. The default shrink-to-fit inline
+  // wrapper is right almost everywhere, but month view's mark is itself
+  // absolutely positioned, and an absolute child contributes nothing to
+  // its parent's size — an inline-block root there would collapse to zero
+  // and take the hover area with it. So that caller passes the absolute
+  // positioning down to this root instead. Whatever is passed must
+  // establish a positioning context: the bubble below anchors to it.
+  claseRaiz?: string;
 };
 
 // A hover-only affordance, on purpose. On touch there is no hover, and the
@@ -13,12 +21,16 @@ type Props = {
 // where the same note is shown in full). So on touch devices this renders its
 // children and nothing else, rather than leaving a control that can never be
 // triggered.
-export default function Tooltip({ contenido, children }: Props) {
+export default function Tooltip({
+  contenido,
+  children,
+  claseRaiz = "relative inline-block",
+}: Props) {
   const [visible, setVisible] = useState(false);
 
   return (
     <span
-      className="relative inline-block"
+      className={claseRaiz}
       onMouseEnter={() => setVisible(true)}
       onMouseLeave={() => setVisible(false)}
     >
