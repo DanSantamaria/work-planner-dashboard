@@ -183,8 +183,10 @@ model Evento {
   // like it came from? Purely descriptive, see comment on the enum above.
   origenVacacion OrigenVacacion?
 
-  // Only set when tipo = AUSENCIA — was it justified? null = still
-  // waiting on the agent to explain, needs supervisor follow-up
+  // Set when tipo = AUSENCIA or NOTA — was it justified? null = still
+  // waiting on the agent to explain, needs supervisor follow-up. Shared
+  // by both because an incidencia gets triaged exactly like an absence
+  // does; VACACION never uses it.
   justificada Boolean?
 
   // Only set when tipo = NOTA and hours are being logged against a

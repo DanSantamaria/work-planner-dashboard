@@ -84,12 +84,13 @@ export default function MonthGrid({
               return (
                 <td
                   key={dia.toISOString()}
-                  className={`border border-gray-300 p-1.5 text-center align-middle group-hover:bg-row-hover ${
+                  className={`relative border border-gray-300 p-1.5 text-center align-middle group-hover:bg-row-hover ${
                     celda.cerrado ? "bg-feriado-bg" : ""
                   }`}
                 >
                   <CeldaCalendario
                     celda={celda}
+                    isStaff={isStaff}
                     onClick={
                       isStaff
                         ? () => onDiaClick?.(empleado.id, dia)

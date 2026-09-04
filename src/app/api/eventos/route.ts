@@ -34,15 +34,21 @@ export async function GET(request: Request) {
 
     // Non-staff callers only get what's needed to color a calendar cell —
     // never notas, justificada, or the medical/exceso hour detail.
-    const eventosPublicos = eventos.map(
-      ({ id, fecha, tipo, origenVacacion, empleadoId }) => ({
+    //
+    // NOTA (shown as "Incidencia") is dropped outright rather than
+    // stripped down: an incidencia is supervisor-only follow-up, so the
+    // public view must not even learn one exists on that day. Filtering
+    // here — not in the component — is what makes it absent from the
+    // response payload, not merely absent from the rendered DOM.
+    const eventosPublicos = eventos
+      .filter((evento) => evento.tipo !== TipoEvento.NOTA)
+      .map(({ id, fecha, tipo, origenVacacion, empleadoId }) => ({
         id,
         fecha,
         tipo,
         origenVacacion,
         empleadoId,
-      })
-    );
+      }));
 
     return NextResponse.json(eventosPublicos, { status: 200 });
   } catch (error) {
@@ -161,8 +167,13 @@ export async function POST(request: Request) {
           fecha,
           notas: notasTrim,
           origenVacacion: tipo === TipoEvento.VACACION ? origenVacacion : null,
+          // AUSENCIA and NOTA both carry a triage status; VACACION never
+          // does, so it is forced back to null rather than trusted from
+          // the body.
           justificada:
-            tipo === TipoEvento.AUSENCIA ? justificada ?? null : null,
+            tipo === TipoEvento.AUSENCIA || tipo === TipoEvento.NOTA
+              ? justificada ?? null
+              : null,
           tipoHoras: tipo === TipoEvento.NOTA ? tipoHoras ?? null : null,
           horas: tipo === TipoEvento.NOTA ? horas ?? null : null,
         })),

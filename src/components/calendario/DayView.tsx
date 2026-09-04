@@ -5,6 +5,7 @@ import type { EventoCalendario, FeriadoCalendario } from "@/lib/calendario-celda
 import { getLobBorderClass } from "@/lib/lob-color";
 import CeldaCalendario, {
   CELDA_BG_CLASSES,
+  puedeVerVariante,
 } from "@/components/calendario/CeldaCalendario";
 import {
   GridTable,
@@ -70,7 +71,8 @@ export default function DayView({
               </td>
               <td
                 className={`border border-gray-300 px-2 py-1 align-top group-hover:bg-row-hover ${
-                  celda.evento
+                  celda.evento &&
+                  puedeVerVariante(celda.evento.variant, isStaff)
                     ? CELDA_BG_CLASSES[celda.evento.variant]
                     : celda.cerrado
                       ? "bg-feriado-bg"
@@ -79,6 +81,7 @@ export default function DayView({
               >
                 <CeldaCalendario
                   celda={celda}
+                  isStaff={isStaff}
                   onClick={
                     isStaff
                       ? () => onDiaClick?.(empleado.id, fecha)

@@ -32,12 +32,13 @@
   --color-vacacion-text: #1B7A3B;
   --color-vacacion-anterior-bg: #E8F5E9;
   --color-vacacion-anterior-text: #5A8F63;
-  /* Incidencia — the same yellow pair already used by the RECEPCION task
-     pill, so the palette keeps a single yellow. Both the badge and the
-     month-view dot read these two tokens (CeldaCalendario), so they can
-     never drift apart. */
-  --color-nota-bg: #FFF6D1;
-  --color-nota-text: #8A6D00;
+  /* Incidencia — blue, so the three calendario states read as green /
+     red / blue at a glance. Same light-fill + darker-ink construction as
+     the vacacion and ausente pairs above. Both the badge and the
+     month-view square read these two tokens (CeldaCalendario), so they
+     can never drift apart. */
+  --color-nota-bg: #D4E9FF;
+  --color-nota-text: #1B5A9E;
   --color-feriado-bg: #F2F2F2;
   --color-feriado-text: #5A5A5A;
 }

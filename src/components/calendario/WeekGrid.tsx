@@ -90,6 +90,7 @@ export default function WeekGrid({
                 >
                   <CeldaCalendario
                     celda={celda}
+                    isStaff={isStaff}
                     onClick={
                       isStaff
                         ? () => onDiaClick?.(empleado.id, dia.fecha)
