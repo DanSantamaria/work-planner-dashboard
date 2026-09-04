@@ -43,8 +43,17 @@ export default function MonthGrid({
   // them and squashes every cell flat. Letting the table take the width its
   // columns ask for keeps them square-ish and moves the excess into the
   // horizontal scroll, which is the trade being made here.
+  //
+  // min-w-full puts a floor under that. The columns only add up to a fixed
+  // ~1540px (a w-44 name column plus 31 w-11 days), so on a wide enough
+  // screen w-auto alone leaves the table short of the container while the
+  // toolbar and the Grupos y Totales table — both w-full — run past its
+  // right edge. The floor makes the table fill the container whenever it
+  // would otherwise come up short, distributing the slack across the day
+  // columns, so all three line up at both edges. Below that width the
+  // natural width still wins and the scroll behaves exactly as before.
   return (
-    <GridTable textoClase="text-xs" anchoClase="w-auto">
+    <GridTable textoClase="text-xs" anchoClase="w-auto min-w-full">
       <thead>
         <tr>
           <NombreHeaderCell
