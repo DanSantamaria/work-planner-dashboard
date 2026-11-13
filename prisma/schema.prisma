@@ -52,6 +52,20 @@ enum TipoHoras {
   EXCESO
 }
 
+// What happened to the thing the history row is about.
+enum AccionHistorial {
+  CREAR
+  EDITAR
+  ELIMINAR
+}
+
+// EVENTO = a vacation/absence/incidencia was created, edited or deleted.
+// SALDO  = someone edited an employee's yearly totals by hand (/empleados).
+enum CategoriaHistorial {
+  EVENTO
+  SALDO
+}
+
 // ─────────────────────────────────────────
 // MODELS - These become your database tables
 // ─────────────────────────────────────────
@@ -203,4 +217,43 @@ model Evento {
 
   @@unique([empleadoId, fecha]) // one entry per employee per day
   @@map("eventos")
+}
+
+// Audit trail for /calendario: who changed what, with the old and new values.
+// Rows older than DIAS_RETENCION (see src/lib/historial.ts) are purged
+// automatically, so this table never grows forever.
+//
+// usuarioId / empleadoId are plain strings with NO foreign key on purpose:
+// the names are copied in ("snapshot") so a row keeps reading correctly even
+// if that user or employee is renamed or deleted later.
+model HistorialCalendario {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  categoria CategoriaHistorial
+  accion    AccionHistorial
+
+  usuarioId     String
+  usuarioNombre String
+
+  empleadoId     String
+  empleadoNombre String
+
+  // Only for categoria = EVENTO. A multi-day vacation is ONE row:
+  // fechaInicio..fechaFin and `dias` say how many days it covered.
+  fechaInicio DateTime?
+  fechaFin    DateTime?
+  tipoEvento  TipoEvento?
+  dias        Int?
+
+  // [{ campo, anterior, nuevo }] — what changed on the event itself (or on
+  // the manual totals, for categoria = SALDO).
+  cambios Json
+  // Same shape — which "used" balances moved as a consequence. Null when no
+  // balance changed.
+  saldos  Json?
+
+  @@index([createdAt])
+  @@index([empleadoId])
+  @@map("historial_calendario")
 }

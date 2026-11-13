@@ -7,6 +7,15 @@ import {
   combinarBalanceUpdates,
 } from "@/lib/evento-balance";
 import { TipoEvento, OrigenVacacion, TipoHoras } from "@/generated/prisma/client";
+import {
+  SALDOS_USADOS_SELECT,
+  cambiosDeSaldos,
+  diferencias,
+  registrarHistorial,
+  snapshotEvento,
+  usuarioDe,
+  type SaldosUsados,
+} from "@/lib/historial";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -22,7 +31,7 @@ type RouteContext = {
 // never keeps leftovers from its previous kind (an AUSENCIA that still
 // carries an origenVacacion, say).
 export async function PATCH(request: Request, { params }: RouteContext) {
-  const { response } = await requireRole(["ADMIN", "SUPERVISOR"]);
+  const { session, response } = await requireRole(["ADMIN", "SUPERVISOR"]);
   if (response) return response;
 
   try {
@@ -107,6 +116,11 @@ export async function PATCH(request: Request, { params }: RouteContext) {
     }
 
     const evento = await prisma.$transaction(async (tx) => {
+      const empleado = await tx.empleado.findUniqueOrThrow({
+        where: { id: existente.empleadoId },
+        select: { nombre: true, ...SALDOS_USADOS_SELECT },
+      });
+
       const actualizado = await tx.evento.update({
         where: { id },
         data: {
@@ -129,12 +143,31 @@ export async function PATCH(request: Request, { params }: RouteContext) {
         balanceUpdateParaEvento(tipoNuevo, tipoHorasNuevo, horasNuevo, 1)
       );
 
+      let saldosDespues: SaldosUsados = empleado;
       if (Object.keys(balanceUpdate).length > 0) {
-        await tx.empleado.update({
+        saldosDespues = await tx.empleado.update({
           where: { id: existente.empleadoId },
           data: balanceUpdate,
+          select: SALDOS_USADOS_SELECT,
         });
       }
+
+      await registrarHistorial(tx, {
+        categoria: "EVENTO",
+        accion: "EDITAR",
+        ...usuarioDe(session),
+        empleadoId: existente.empleadoId,
+        empleadoNombre: empleado.nombre,
+        fechaInicio: existente.fecha,
+        fechaFin: existente.fecha,
+        tipoEvento: actualizado.tipo,
+        dias: 1,
+        cambios: diferencias(
+          snapshotEvento(existente),
+          snapshotEvento(actualizado)
+        ),
+        saldos: cambiosDeSaldos(empleado, saldosDespues),
+      });
 
       return actualizado;
     });
@@ -157,7 +190,7 @@ export async function PATCH(request: Request, { params }: RouteContext) {
 }
 
 export async function DELETE(_request: Request, { params }: RouteContext) {
-  const { response } = await requireRole(["ADMIN", "SUPERVISOR"]);
+  const { session, response } = await requireRole(["ADMIN", "SUPERVISOR"]);
   if (response) return response;
 
   try {
@@ -172,6 +205,11 @@ export async function DELETE(_request: Request, { params }: RouteContext) {
     }
 
     await prisma.$transaction(async (tx) => {
+      const empleado = await tx.empleado.findUniqueOrThrow({
+        where: { id: existente.empleadoId },
+        select: { nombre: true, ...SALDOS_USADOS_SELECT },
+      });
+
       await tx.evento.delete({ where: { id } });
 
       const balanceUpdate = balanceUpdateParaEvento(
@@ -181,12 +219,28 @@ export async function DELETE(_request: Request, { params }: RouteContext) {
         -1
       );
 
+      let saldosDespues: SaldosUsados = empleado;
       if (Object.keys(balanceUpdate).length > 0) {
-        await tx.empleado.update({
+        saldosDespues = await tx.empleado.update({
           where: { id: existente.empleadoId },
           data: balanceUpdate,
+          select: SALDOS_USADOS_SELECT,
         });
       }
+
+      await registrarHistorial(tx, {
+        categoria: "EVENTO",
+        accion: "ELIMINAR",
+        ...usuarioDe(session),
+        empleadoId: existente.empleadoId,
+        empleadoNombre: empleado.nombre,
+        fechaInicio: existente.fecha,
+        fechaFin: existente.fecha,
+        tipoEvento: existente.tipo,
+        dias: 1,
+        cambios: diferencias(snapshotEvento(existente), null),
+        saldos: cambiosDeSaldos(empleado, saldosDespues),
+      });
     });
 
     return NextResponse.json({ success: true }, { status: 200 });

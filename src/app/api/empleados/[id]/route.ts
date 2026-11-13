@@ -3,13 +3,14 @@ import { prisma } from "@/lib/prisma";
 import { isPrismaError } from "@/lib/prisma-errors";
 import { LOB, Turno } from "@/generated/prisma/client";
 import { requireRole } from "@/lib/api-auth";
+import { diferencias, registrarHistorial, usuarioDe } from "@/lib/historial";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
 };
 
 export async function PUT(request: Request, { params }: RouteContext) {
-  const { response } = await requireRole(["ADMIN", "SUPERVISOR"]);
+  const { session, response } = await requireRole(["ADMIN", "SUPERVISOR"]);
   if (response) return response;
 
   try {
@@ -82,22 +83,59 @@ export async function PUT(request: Request, { params }: RouteContext) {
       );
     }
 
-    const empleado = await prisma.empleado.update({
-      where: { id },
-      data: {
-        ...(nombre !== undefined && { nombre: nombre.trim() }),
-        ...(lob !== undefined && { lob }),
-        ...(turno !== undefined && { turno }),
-        ...(horario !== undefined && {
-          horario: typeof horario === "string" ? horario.trim() : "",
-        }),
-        ...(activo !== undefined && { activo }),
-        ...(diasVacaciones !== undefined && { diasVacaciones }),
-        ...(horasExceso !== undefined && { horasExceso }),
-        ...(horasMedicasTotal !== undefined && { horasMedicasTotal }),
-        ...(grupoId !== undefined && { grupoId }),
-        ...(ordenEnGrupo !== undefined && { ordenEnGrupo }),
-      },
+    const empleado = await prisma.$transaction(async (tx) => {
+      // The yearly totals edited by hand on /calendario are tracked in the
+      // history; read them first so we can say what they were before.
+      const antes = await tx.empleado.findUniqueOrThrow({
+        where: { id },
+        select: {
+          nombre: true,
+          diasVacaciones: true,
+          horasExceso: true,
+          horasMedicasTotal: true,
+        },
+      });
+
+      const actualizado = await tx.empleado.update({
+        where: { id },
+        data: {
+          ...(nombre !== undefined && { nombre: nombre.trim() }),
+          ...(lob !== undefined && { lob }),
+          ...(turno !== undefined && { turno }),
+          ...(horario !== undefined && {
+            horario: typeof horario === "string" ? horario.trim() : "",
+          }),
+          ...(activo !== undefined && { activo }),
+          ...(diasVacaciones !== undefined && { diasVacaciones }),
+          ...(horasExceso !== undefined && { horasExceso }),
+          ...(horasMedicasTotal !== undefined && { horasMedicasTotal }),
+          ...(grupoId !== undefined && { grupoId }),
+          ...(ordenEnGrupo !== undefined && { ordenEnGrupo }),
+        },
+      });
+
+      await registrarHistorial(tx, {
+        categoria: "SALDO",
+        accion: "EDITAR",
+        ...usuarioDe(session),
+        empleadoId: id,
+        empleadoNombre: actualizado.nombre,
+        cambios: diferencias(
+          {
+            diasVacaciones: antes.diasVacaciones,
+            horasExceso: antes.horasExceso,
+            horasMedicasTotal: antes.horasMedicasTotal,
+          },
+          {
+            diasVacaciones: actualizado.diasVacaciones,
+            horasExceso: actualizado.horasExceso,
+            horasMedicasTotal: actualizado.horasMedicasTotal,
+          }
+        ),
+        saldos: [],
+      });
+
+      return actualizado;
     });
 
     return NextResponse.json(empleado, { status: 200 });

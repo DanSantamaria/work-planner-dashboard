@@ -10,6 +10,7 @@ import {
   CalendarRange,
   Users,
   UserCog,
+  History,
   ListChecks,
   PanelLeftClose,
   PanelRightClose,
@@ -36,6 +37,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/calendario", label: "Calendario", Icon: CalendarRange, roles: null },
   { href: "/empleados", label: "Empleados", Icon: Users, roles: ["ADMIN", "SUPERVISOR"] },
   { href: "/tareas", label: "Tareas", Icon: ListChecks, roles: ["ADMIN", "SUPERVISOR"] },
+  { href: "/historial", label: "Historial", Icon: History, roles: ["ADMIN", "SUPERVISOR"] },
   { href: "/usuarios", label: "Usuarios", Icon: UserCog, roles: ["ADMIN"] },
 ];
 

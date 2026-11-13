@@ -5,6 +5,15 @@ import { isPrismaError } from "@/lib/prisma-errors";
 import { requireRole } from "@/lib/api-auth";
 import { balanceUpdateParaEvento } from "@/lib/evento-balance";
 import {
+  SALDOS_USADOS_SELECT,
+  cambiosDeSaldos,
+  diferencias,
+  registrarHistorial,
+  snapshotEvento,
+  usuarioDe,
+  type SaldosUsados,
+} from "@/lib/historial";
+import {
   TipoEvento,
   OrigenVacacion,
   TipoHoras,
@@ -74,7 +83,7 @@ function enumerarFechas(fechaInicio: Date, fechaFin: Date): Date[] {
 }
 
 export async function POST(request: Request) {
-  const { response } = await requireRole(["ADMIN", "SUPERVISOR"]);
+  const { session, response } = await requireRole(["ADMIN", "SUPERVISOR"]);
   if (response) return response;
 
   try {
@@ -160,6 +169,13 @@ export async function POST(request: Request) {
     const notasTrim = typeof notas === "string" ? notas.trim() || null : null;
 
     const eventos = await prisma.$transaction(async (tx) => {
+      // Read before changing anything: the history row needs the employee's
+      // name and what their balances were beforehand.
+      const empleado = await tx.empleado.findUniqueOrThrow({
+        where: { id: empleadoId },
+        select: { nombre: true, ...SALDOS_USADOS_SELECT },
+      });
+
       await tx.evento.createMany({
         data: fechas.map((fecha) => ({
           empleadoId,
@@ -186,12 +202,42 @@ export async function POST(request: Request) {
         fechas.length
       );
 
+      let saldosDespues: SaldosUsados = empleado;
       if (Object.keys(balanceUpdate).length > 0) {
-        await tx.empleado.update({
+        saldosDespues = await tx.empleado.update({
           where: { id: empleadoId },
           data: balanceUpdate,
+          select: SALDOS_USADOS_SELECT,
         });
       }
+
+      // One row for the whole range, however many days it covers.
+      await registrarHistorial(tx, {
+        categoria: "EVENTO",
+        accion: "CREAR",
+        ...usuarioDe(session),
+        empleadoId,
+        empleadoNombre: empleado.nombre,
+        fechaInicio: inicioParsed,
+        fechaFin: finParsed,
+        tipoEvento: tipo,
+        dias: fechas.length,
+        cambios: diferencias(
+          null,
+          snapshotEvento({
+            tipo,
+            origenVacacion: tipo === TipoEvento.VACACION ? origenVacacion : null,
+            justificada:
+              tipo === TipoEvento.AUSENCIA || tipo === TipoEvento.NOTA
+                ? justificada ?? null
+                : null,
+            tipoHoras: tipo === TipoEvento.NOTA ? tipoHoras ?? null : null,
+            horas: tipo === TipoEvento.NOTA ? horas ?? null : null,
+            notas: notasTrim,
+          })
+        ),
+        saldos: cambiosDeSaldos(empleado, saldosDespues),
+      });
 
       return tx.evento.findMany({
         where: { empleadoId, fecha: { in: fechas } },
@@ -208,6 +254,13 @@ export async function POST(request: Request) {
             "Ese empleado ya tiene un evento registrado en una de esas fechas",
         },
         { status: 409 }
+      );
+    }
+
+    if (isPrismaError(error, "P2025")) {
+      return NextResponse.json(
+        { error: "Empleado no encontrado" },
+        { status: 404 }
       );
     }
 
