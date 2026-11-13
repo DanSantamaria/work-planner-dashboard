@@ -200,23 +200,28 @@ export default async function HistorialPage({
           </select>
         </label>
 
-        <Input
-          type="date"
-          label="Desde"
-          name="desde"
-          defaultValue={fechaValida(desde) ? desde : ""}
-          wrapperClassName="min-w-0"
-          className="min-w-0"
-        />
-
-        <Input
-          type="date"
-          label="Hasta"
-          name="hasta"
-          defaultValue={fechaValida(hasta) ? hasta : ""}
-          wrapperClassName="min-w-0"
-          className="min-w-0"
-        />
+        {/* The two dates share one flex row, exactly like the date pair in
+            the event modal. A flex row splits the width by force; as separate
+            grid cells, Safari on iPad lets a date field overflow its column
+            by its padding + border and it ends up on top of its neighbour. */}
+        <div className="flex min-w-0 flex-col gap-3 sm:col-span-2 sm:flex-row">
+          <Input
+            type="date"
+            label="Desde"
+            name="desde"
+            defaultValue={fechaValida(desde) ? desde : ""}
+            wrapperClassName="min-w-0 flex-1"
+            className="box-border min-w-0"
+          />
+          <Input
+            type="date"
+            label="Hasta"
+            name="hasta"
+            defaultValue={fechaValida(hasta) ? hasta : ""}
+            wrapperClassName="min-w-0 flex-1"
+            className="box-border min-w-0"
+          />
+        </div>
 
         <div className="flex items-center gap-3 sm:col-span-2 lg:col-span-3 2xl:col-span-5">
           <button
