@@ -46,3 +46,44 @@
 body {
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Loader animation (see components/ui/Loader.tsx).
+   Each of the 4 squares runs the same 1.2s cycle but starts 0.3s after the
+   previous one, so the orange "passes" from square to square like a
+   baton in a relay race. Orange for the first ~20% of the cycle, then it
+   fades back to white and waits for its next turn. */
+@keyframes loader-cell {
+  0%,
+  20% {
+    fill: var(--color-accent);
+    stroke: var(--color-accent);
+  }
+  30%,
+  95% {
+    fill: #ffffff;
+    stroke: var(--color-sidebar);
+  }
+  100% {
+    fill: var(--color-accent);
+    stroke: var(--color-accent);
+  }
+}
+
+.loader-cell {
+  fill: #ffffff;
+  stroke: var(--color-sidebar);
+  animation: loader-cell 1.2s ease-in-out infinite;
+  animation-delay: calc(var(--i) * 0.3s);
+}
+
+/* People who ask their system for less motion get a still logo instead:
+   the top-right square stays orange, exactly like the real logo. */
+@media (prefers-reduced-motion: reduce) {
+  .loader-cell {
+    animation: none;
+  }
+  .loader-cell-logo {
+    fill: var(--color-accent);
+    stroke: var(--color-accent);
+  }
+}
