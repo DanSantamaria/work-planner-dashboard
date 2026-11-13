@@ -12,9 +12,15 @@ type RouteContext = {
   params: Promise<{ id: string }>;
 };
 
-// tipo, fecha, and empleadoId are intentionally not editable here — changing
-// the kind of an event reopens which balance should be adjusted. Delete and
-// recreate instead if that's what's needed.
+// fecha and empleadoId are intentionally not editable here. tipo is: changing
+// it works because the balance effect is computed per event — we reverse what
+// the old version contributed and apply what the new version contributes, so
+// e.g. VACACION → AUSENCIA gives the vacation day back to the employee.
+//
+// Every type-specific column (origenVacacion, justificada, tipoHoras, horas)
+// is recomputed from the NEW tipo with the same rules POST uses, so an event
+// never keeps leftovers from its previous kind (an AUSENCIA that still
+// carries an origenVacacion, say).
 export async function PATCH(request: Request, { params }: RouteContext) {
   const { response } = await requireRole(["ADMIN", "SUPERVISOR"]);
   if (response) return response;
@@ -22,7 +28,7 @@ export async function PATCH(request: Request, { params }: RouteContext) {
   try {
     const { id } = await params;
     const body = await request.json();
-    const { notas, origenVacacion, justificada, tipoHoras, horas } = body;
+    const { tipo, notas, origenVacacion, justificada, tipoHoras, horas } = body;
 
     const existente = await prisma.evento.findUnique({ where: { id } });
     if (!existente) {
@@ -32,39 +38,71 @@ export async function PATCH(request: Request, { params }: RouteContext) {
       );
     }
 
-    if (
-      existente.tipo === TipoEvento.VACACION &&
-      origenVacacion !== undefined &&
-      !Object.values(OrigenVacacion).includes(origenVacacion)
-    ) {
+    const tipoNuevo: TipoEvento = tipo !== undefined ? tipo : existente.tipo;
+    if (!Object.values(TipoEvento).includes(tipoNuevo)) {
       return NextResponse.json(
-        { error: "El origen de la vacación no es válido" },
+        { error: "El tipo de evento no es válido" },
         { status: 400 }
       );
     }
 
-    let tipoHorasNuevo = existente.tipoHoras;
-    let horasNuevo = existente.horas;
+    // VACACION only: which year's days. Falls back to what the event
+    // already had, so editing just the notes of a vacation keeps its origin.
+    let origenNuevo: OrigenVacacion | null = null;
+    if (tipoNuevo === TipoEvento.VACACION) {
+      const candidato =
+        origenVacacion !== undefined ? origenVacacion : existente.origenVacacion;
+      if (!Object.values(OrigenVacacion).includes(candidato)) {
+        return NextResponse.json(
+          { error: "Indica si la vacación es del año anterior o del actual" },
+          { status: 400 }
+        );
+      }
+      origenNuevo = candidato;
+    }
 
-    if (existente.tipo === TipoEvento.NOTA) {
-      if (tipoHoras !== undefined) {
-        if (tipoHoras !== null && !Object.values(TipoHoras).includes(tipoHoras)) {
-          return NextResponse.json(
-            { error: "El tipo de horas no es válido" },
-            { status: 400 }
-          );
-        }
-        tipoHorasNuevo = tipoHoras;
+    // AUSENCIA and NOTA share the triage status; VACACION never has one.
+    let justificadaNueva: boolean | null = null;
+    if (
+      tipoNuevo === TipoEvento.AUSENCIA ||
+      tipoNuevo === TipoEvento.NOTA
+    ) {
+      const candidata =
+        justificada !== undefined ? justificada : existente.justificada;
+      if (candidata !== null && typeof candidata !== "boolean") {
+        return NextResponse.json(
+          { error: "El estado de justificación no es válido" },
+          { status: 400 }
+        );
+      }
+      justificadaNueva = candidata;
+    }
+
+    // NOTA only: optional hours logged against a balance.
+    let tipoHorasNuevo: TipoHoras | null = null;
+    let horasNuevo: number | null = null;
+    if (tipoNuevo === TipoEvento.NOTA) {
+      tipoHorasNuevo = tipoHoras !== undefined ? tipoHoras : existente.tipoHoras;
+      horasNuevo = horas !== undefined ? horas : existente.horas;
+
+      if (
+        tipoHorasNuevo !== null &&
+        !Object.values(TipoHoras).includes(tipoHorasNuevo)
+      ) {
+        return NextResponse.json(
+          { error: "El tipo de horas no es válido" },
+          { status: 400 }
+        );
       }
 
-      if (horas !== undefined) {
-        if (horas !== null && (typeof horas !== "number" || horas <= 0)) {
-          return NextResponse.json(
-            { error: "Las horas deben ser un número mayor que cero" },
-            { status: 400 }
-          );
-        }
-        horasNuevo = horas;
+      if (
+        horasNuevo !== null &&
+        (typeof horasNuevo !== "number" || horasNuevo <= 0)
+      ) {
+        return NextResponse.json(
+          { error: "Las horas deben ser un número mayor que cero" },
+          { status: 400 }
+        );
       }
     }
 
@@ -72,16 +110,12 @@ export async function PATCH(request: Request, { params }: RouteContext) {
       const actualizado = await tx.evento.update({
         where: { id },
         data: {
+          tipo: tipoNuevo,
           ...(notas !== undefined && { notas: notas?.trim() || null }),
-          ...(existente.tipo === TipoEvento.VACACION &&
-            origenVacacion !== undefined && { origenVacacion }),
-          ...((existente.tipo === TipoEvento.AUSENCIA ||
-            existente.tipo === TipoEvento.NOTA) &&
-            justificada !== undefined && { justificada }),
-          ...(existente.tipo === TipoEvento.NOTA && {
-            tipoHoras: tipoHorasNuevo,
-            horas: horasNuevo,
-          }),
+          origenVacacion: origenNuevo,
+          justificada: justificadaNueva,
+          tipoHoras: tipoHorasNuevo,
+          horas: horasNuevo,
         },
       });
 
@@ -92,7 +126,7 @@ export async function PATCH(request: Request, { params }: RouteContext) {
           existente.horas,
           -1
         ),
-        balanceUpdateParaEvento(existente.tipo, tipoHorasNuevo, horasNuevo, 1)
+        balanceUpdateParaEvento(tipoNuevo, tipoHorasNuevo, horasNuevo, 1)
       );
 
       if (Object.keys(balanceUpdate).length > 0) {

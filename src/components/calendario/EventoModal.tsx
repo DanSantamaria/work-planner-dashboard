@@ -144,6 +144,7 @@ export default function EventoModal({
 
     const body: Record<string, unknown> = modoEdicion
       ? {
+          tipo,
           notas: notas.trim() || null,
           ...(tipo === "VACACION" && { origenVacacion }),
           ...(llevaJustificada && { justificada }),
@@ -252,9 +253,8 @@ export default function EventoModal({
               <button
                 key={opcion.valor}
                 type="button"
-                disabled={modoEdicion}
                 onClick={() => setTipo(opcion.valor)}
-                className={`disabled:cursor-not-allowed ${
+                className={`cursor-pointer ${
                   tipo === opcion.valor ? "" : "opacity-40"
                 }`}
               >
@@ -266,8 +266,9 @@ export default function EventoModal({
 
         {modoEdicion && (
           <p className="-mt-2 text-xs text-gray-500">
-            Para cambiar el tipo, la fecha o el empleado, elimina este
-            evento y crea uno nuevo.
+            {eventoExistente && tipo !== eventoExistente.tipo
+              ? "Al cambiar el tipo, los saldos del empleado se ajustan solos."
+              : "Para cambiar la fecha o el empleado, elimina este evento y crea uno nuevo."}
           </p>
         )}
 
