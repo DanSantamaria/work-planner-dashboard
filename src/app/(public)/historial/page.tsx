@@ -11,6 +11,8 @@ import {
   etiquetaValor,
   formatearMomento,
   formatearPeriodo,
+  formatearSaldo,
+  SALDOS_MOSTRADOS,
 } from "@/lib/historial-formato";
 import Badge from "@/components/ui/Badge";
 import {
@@ -51,8 +53,10 @@ const VARIANTE_TIPO = {
   NOTA: "nota",
 } as const;
 
+// min-w-0 matters: a date input has a built-in minimum width, and without it
+// the field refuses to shrink to its grid column and overlaps its neighbour.
 const CLASE_CAMPO =
-  "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sidebar";
+  "h-10 w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sidebar";
 
 export default async function HistorialPage({
   searchParams,
@@ -144,9 +148,9 @@ export default async function HistorialPage({
           and no client-side code is needed. */}
       <form
         method="get"
-        className="mb-6 grid gap-3 rounded-lg border border-gray-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-5"
+        className="mb-6 grid gap-3 rounded-lg border border-gray-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5"
       >
-        <label className="text-sm font-medium text-gray-700">
+        <label className="min-w-0 text-sm font-medium text-gray-700">
           Empleado
           <select
             name="empleado"
@@ -162,7 +166,7 @@ export default async function HistorialPage({
           </select>
         </label>
 
-        <label className="text-sm font-medium text-gray-700">
+        <label className="min-w-0 text-sm font-medium text-gray-700">
           Hecho por
           <select
             name="usuario"
@@ -178,7 +182,7 @@ export default async function HistorialPage({
           </select>
         </label>
 
-        <label className="text-sm font-medium text-gray-700">
+        <label className="min-w-0 text-sm font-medium text-gray-700">
           Acción
           <select
             name="accion"
@@ -194,7 +198,7 @@ export default async function HistorialPage({
           </select>
         </label>
 
-        <label className="text-sm font-medium text-gray-700">
+        <label className="min-w-0 text-sm font-medium text-gray-700">
           Desde
           <input
             type="date"
@@ -204,7 +208,7 @@ export default async function HistorialPage({
           />
         </label>
 
-        <label className="text-sm font-medium text-gray-700">
+        <label className="min-w-0 text-sm font-medium text-gray-700">
           Hasta
           <input
             type="date"
@@ -214,7 +218,7 @@ export default async function HistorialPage({
           />
         </label>
 
-        <div className="flex items-center gap-3 sm:col-span-2 lg:col-span-5">
+        <div className="flex items-center gap-3 sm:col-span-2 lg:col-span-3 2xl:col-span-5">
           <button
             type="submit"
             className="cursor-pointer rounded-lg bg-sidebar px-4 py-2 text-sm text-white hover:opacity-90"
@@ -282,11 +286,7 @@ export default async function HistorialPage({
                     <LineasCambio cambios={cambios} accion={r.accion} />
                   </TableCell>
                   <TableCell>
-                    {saldos.length === 0 ? (
-                      <span className="text-gray-400">—</span>
-                    ) : (
-                      <LineasCambio cambios={saldos} accion="EDITAR" />
-                    )}
+                    <BloquesSaldo saldos={saldos} />
                   </TableCell>
                 </TableRow>
               );
@@ -348,5 +348,48 @@ function LineasCambio({
         </li>
       ))}
     </ul>
+  );
+}
+
+// "Saldos" column: for each balance that changed, the balance the employee had
+// before and the one they have now — e.g. "Saldo anterior: 10 días / Nuevo
+// saldo: 9 días". Rows saved by the first version of the history stored the
+// "used" counters instead; those fall back to a plain before → after line.
+function BloquesSaldo({ saldos }: { saldos: ReturnType<typeof comoCambios> }) {
+  const conocidos = SALDOS_MOSTRADOS.flatMap((s) => {
+    const cambio = saldos.find((c) => c.campo === s.campo);
+    return cambio ? [{ ...s, cambio }] : [];
+  });
+  const antiguos = saldos.filter(
+    (c) => !SALDOS_MOSTRADOS.some((s) => s.campo === c.campo)
+  );
+
+  if (conocidos.length === 0 && antiguos.length === 0) {
+    return <span className="text-gray-400">—</span>;
+  }
+
+  return (
+    <div className="flex flex-col gap-2 text-xs text-gray-700">
+      {conocidos.map(({ campo, unidad, cambio }) => (
+        <div key={campo}>
+          <div className="font-medium">{etiquetaCampo(campo)}</div>
+          <div>
+            Saldo anterior:{" "}
+            <span className="font-semibold">
+              {formatearSaldo(cambio.anterior, unidad)}
+            </span>
+          </div>
+          <div>
+            Nuevo saldo:{" "}
+            <span className="font-semibold">
+              {formatearSaldo(cambio.nuevo, unidad)}
+            </span>
+          </div>
+        </div>
+      ))}
+      {antiguos.length > 0 && (
+        <LineasCambio cambios={antiguos} accion="EDITAR" />
+      )}
+    </div>
   );
 }

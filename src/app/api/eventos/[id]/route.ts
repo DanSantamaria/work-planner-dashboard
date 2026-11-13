@@ -8,13 +8,13 @@ import {
 } from "@/lib/evento-balance";
 import { TipoEvento, OrigenVacacion, TipoHoras } from "@/generated/prisma/client";
 import {
-  SALDOS_USADOS_SELECT,
+  SALDOS_SELECT,
   cambiosDeSaldos,
   diferencias,
   registrarHistorial,
   snapshotEvento,
   usuarioDe,
-  type SaldosUsados,
+  type SaldosEmpleado,
 } from "@/lib/historial";
 
 type RouteContext = {
@@ -118,7 +118,7 @@ export async function PATCH(request: Request, { params }: RouteContext) {
     const evento = await prisma.$transaction(async (tx) => {
       const empleado = await tx.empleado.findUniqueOrThrow({
         where: { id: existente.empleadoId },
-        select: { nombre: true, ...SALDOS_USADOS_SELECT },
+        select: { nombre: true, ...SALDOS_SELECT },
       });
 
       const actualizado = await tx.evento.update({
@@ -143,12 +143,12 @@ export async function PATCH(request: Request, { params }: RouteContext) {
         balanceUpdateParaEvento(tipoNuevo, tipoHorasNuevo, horasNuevo, 1)
       );
 
-      let saldosDespues: SaldosUsados = empleado;
+      let saldosDespues: SaldosEmpleado = empleado;
       if (Object.keys(balanceUpdate).length > 0) {
         saldosDespues = await tx.empleado.update({
           where: { id: existente.empleadoId },
           data: balanceUpdate,
-          select: SALDOS_USADOS_SELECT,
+          select: SALDOS_SELECT,
         });
       }
 
@@ -207,7 +207,7 @@ export async function DELETE(_request: Request, { params }: RouteContext) {
     await prisma.$transaction(async (tx) => {
       const empleado = await tx.empleado.findUniqueOrThrow({
         where: { id: existente.empleadoId },
-        select: { nombre: true, ...SALDOS_USADOS_SELECT },
+        select: { nombre: true, ...SALDOS_SELECT },
       });
 
       await tx.evento.delete({ where: { id } });
@@ -219,12 +219,12 @@ export async function DELETE(_request: Request, { params }: RouteContext) {
         -1
       );
 
-      let saldosDespues: SaldosUsados = empleado;
+      let saldosDespues: SaldosEmpleado = empleado;
       if (Object.keys(balanceUpdate).length > 0) {
         saldosDespues = await tx.empleado.update({
           where: { id: existente.empleadoId },
           data: balanceUpdate,
-          select: SALDOS_USADOS_SELECT,
+          select: SALDOS_SELECT,
         });
       }
 

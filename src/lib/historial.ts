@@ -17,25 +17,6 @@ export function fechaLimiteRetencion(ahora: Date = new Date()): Date {
 export type Valor = string | number | boolean | null;
 export type Cambio = { campo: string; anterior: Valor; nuevo: Valor };
 
-// The three "used" counters on Empleado that events move around.
-export const SALDOS_USADOS_SELECT = {
-  diasVacacionesUsados: true,
-  horasExcesoUsadas: true,
-  horasMedicasUsadas: true,
-} as const;
-
-export type SaldosUsados = {
-  diasVacacionesUsados: number;
-  horasExcesoUsadas: number;
-  horasMedicasUsadas: number;
-};
-
-const CAMPOS_SALDOS_USADOS: (keyof SaldosUsados)[] = [
-  "diasVacacionesUsados",
-  "horasExcesoUsadas",
-  "horasMedicasUsadas",
-];
-
 // Compares two flat objects field by field and returns only what differs.
 //   antes = null  → the thing was just created (everything is "new")
 //   despues = null → the thing was deleted (everything is "old")
@@ -61,15 +42,49 @@ export function diferencias(
   return cambios;
 }
 
-// The employee's "used" balances, before vs after. Only the ones that moved.
+// Everything needed to work out an employee's remaining balances: the yearly
+// totals they were granted and how much of each has been used so far.
+export const SALDOS_SELECT = {
+  diasVacaciones: true,
+  diasVacacionesUsados: true,
+  horasExceso: true,
+  horasExcesoUsadas: true,
+  horasMedicasTotal: true,
+  horasMedicasUsadas: true,
+} as const;
+
+export type SaldosEmpleado = {
+  diasVacaciones: number;
+  diasVacacionesUsados: number;
+  horasExceso: number;
+  horasExcesoUsadas: number;
+  horasMedicasTotal: number;
+  horasMedicasUsadas: number;
+};
+
+// Hours move in half-hour steps, but floating-point maths can leave things
+// like 2.0000000000000004; rounding to 2 decimals keeps the history clean.
+function redondear(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
+// What the employee has LEFT of each balance (granted minus used).
+function saldosRestantes(e: SaldosEmpleado): Record<string, Valor> {
+  return {
+    saldoVacaciones: redondear(e.diasVacaciones - e.diasVacacionesUsados),
+    saldoHorasExceso: redondear(e.horasExceso - e.horasExcesoUsadas),
+    saldoHorasMedicas: redondear(e.horasMedicasTotal - e.horasMedicasUsadas),
+  };
+}
+
+// The employee's remaining balances, before vs after. Only the ones that
+// moved, so "Saldo anterior 10 días → nuevo saldo 9 días" shows up only when
+// the change really touched vacation days.
 export function cambiosDeSaldos(
-  antes: SaldosUsados,
-  despues: SaldosUsados
+  antes: SaldosEmpleado,
+  despues: SaldosEmpleado
 ): Cambio[] {
-  return diferencias(
-    Object.fromEntries(CAMPOS_SALDOS_USADOS.map((c) => [c, antes[c]])),
-    Object.fromEntries(CAMPOS_SALDOS_USADOS.map((c) => [c, despues[c]]))
-  );
+  return diferencias(saldosRestantes(antes), saldosRestantes(despues));
 }
 
 type EventoSnapshotFuente = {

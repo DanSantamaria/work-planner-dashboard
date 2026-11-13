@@ -5,13 +5,13 @@ import { isPrismaError } from "@/lib/prisma-errors";
 import { requireRole } from "@/lib/api-auth";
 import { balanceUpdateParaEvento } from "@/lib/evento-balance";
 import {
-  SALDOS_USADOS_SELECT,
+  SALDOS_SELECT,
   cambiosDeSaldos,
   diferencias,
   registrarHistorial,
   snapshotEvento,
   usuarioDe,
-  type SaldosUsados,
+  type SaldosEmpleado,
 } from "@/lib/historial";
 import {
   TipoEvento,
@@ -173,7 +173,7 @@ export async function POST(request: Request) {
       // name and what their balances were beforehand.
       const empleado = await tx.empleado.findUniqueOrThrow({
         where: { id: empleadoId },
-        select: { nombre: true, ...SALDOS_USADOS_SELECT },
+        select: { nombre: true, ...SALDOS_SELECT },
       });
 
       await tx.evento.createMany({
@@ -202,12 +202,12 @@ export async function POST(request: Request) {
         fechas.length
       );
 
-      let saldosDespues: SaldosUsados = empleado;
+      let saldosDespues: SaldosEmpleado = empleado;
       if (Object.keys(balanceUpdate).length > 0) {
         saldosDespues = await tx.empleado.update({
           where: { id: empleadoId },
           data: balanceUpdate,
-          select: SALDOS_USADOS_SELECT,
+          select: SALDOS_SELECT,
         });
       }
 

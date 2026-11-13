@@ -3,7 +3,13 @@ import { prisma } from "@/lib/prisma";
 import { isPrismaError } from "@/lib/prisma-errors";
 import { LOB, Turno } from "@/generated/prisma/client";
 import { requireRole } from "@/lib/api-auth";
-import { diferencias, registrarHistorial, usuarioDe } from "@/lib/historial";
+import {
+  SALDOS_SELECT,
+  cambiosDeSaldos,
+  diferencias,
+  registrarHistorial,
+  usuarioDe,
+} from "@/lib/historial";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -88,12 +94,7 @@ export async function PUT(request: Request, { params }: RouteContext) {
       // history; read them first so we can say what they were before.
       const antes = await tx.empleado.findUniqueOrThrow({
         where: { id },
-        select: {
-          nombre: true,
-          diasVacaciones: true,
-          horasExceso: true,
-          horasMedicasTotal: true,
-        },
+        select: { nombre: true, ...SALDOS_SELECT },
       });
 
       const actualizado = await tx.empleado.update({
@@ -132,7 +133,8 @@ export async function PUT(request: Request, { params }: RouteContext) {
             horasMedicasTotal: actualizado.horasMedicasTotal,
           }
         ),
-        saldos: [],
+        // Changing a yearly total also changes what the employee has left.
+        saldos: cambiosDeSaldos(antes, actualizado),
       });
 
       return actualizado;

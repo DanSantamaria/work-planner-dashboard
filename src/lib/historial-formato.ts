@@ -10,10 +10,10 @@ const ETIQUETA_CAMPO: Record<string, string> = {
   tipoHoras: "Tipo de horas",
   horas: "Horas",
   notas: "Notas",
-  // "Used" balances that move when an event changes
-  diasVacacionesUsados: "Vacaciones usadas (días)",
-  horasExcesoUsadas: "Horas de exceso usadas",
-  horasMedicasUsadas: "Horas médicas usadas",
+  // Remaining balances (what the employee has left)
+  saldoVacaciones: "Vacaciones",
+  saldoHorasExceso: "Horas de exceso",
+  saldoHorasMedicas: "Horas médicas",
   // Totals edited by hand
   diasVacaciones: "Vacaciones totales (días)",
   horasExceso: "Horas de exceso totales",
@@ -125,4 +125,25 @@ export function comoCambios(
   }
 
   return cambios;
+}
+
+// The three remaining balances shown in the "Saldos" column, with the unit
+// each one is measured in.
+export const SALDOS_MOSTRADOS: { campo: string; unidad: "dias" | "horas" }[] = [
+  { campo: "saldoVacaciones", unidad: "dias" },
+  { campo: "saldoHorasExceso", unidad: "horas" },
+  { campo: "saldoHorasMedicas", unidad: "horas" },
+];
+
+/** "10 días", "1 día", "1,5 h" */
+export function formatearSaldo(
+  valor: string | number | boolean | null,
+  unidad: "dias" | "horas"
+): string {
+  if (typeof valor !== "number") return "—";
+  const numero = new Intl.NumberFormat("es-ES", {
+    maximumFractionDigits: 2,
+  }).format(valor);
+  if (unidad === "horas") return `${numero} h`;
+  return `${numero} ${valor === 1 ? "día" : "días"}`;
 }
