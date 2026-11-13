@@ -15,6 +15,7 @@ import {
   SALDOS_MOSTRADOS,
 } from "@/lib/historial-formato";
 import Badge from "@/components/ui/Badge";
+import Input from "@/components/ui/Input";
 import {
   Table,
   TableBody,
@@ -53,10 +54,11 @@ const VARIANTE_TIPO = {
   NOTA: "nota",
 } as const;
 
-// min-w-0 matters: a date input has a built-in minimum width, and without it
-// the field refuses to shrink to its grid column and overlaps its neighbour.
+// Same look as the shared <Input> (used for the date fields below), so the
+// selects and the dates line up. min-w-0 lets a field shrink to its grid
+// column instead of overflowing into its neighbour.
 const CLASE_CAMPO =
-  "h-10 w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sidebar";
+  "w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sidebar";
 
 export default async function HistorialPage({
   searchParams,
@@ -198,25 +200,23 @@ export default async function HistorialPage({
           </select>
         </label>
 
-        <label className="min-w-0 text-sm font-medium text-gray-700">
-          Desde
-          <input
-            type="date"
-            name="desde"
-            defaultValue={fechaValida(desde) ? desde : ""}
-            className={`mt-1 ${CLASE_CAMPO}`}
-          />
-        </label>
+        <Input
+          type="date"
+          label="Desde"
+          name="desde"
+          defaultValue={fechaValida(desde) ? desde : ""}
+          wrapperClassName="min-w-0"
+          className="min-w-0"
+        />
 
-        <label className="min-w-0 text-sm font-medium text-gray-700">
-          Hasta
-          <input
-            type="date"
-            name="hasta"
-            defaultValue={fechaValida(hasta) ? hasta : ""}
-            className={`mt-1 ${CLASE_CAMPO}`}
-          />
-        </label>
+        <Input
+          type="date"
+          label="Hasta"
+          name="hasta"
+          defaultValue={fechaValida(hasta) ? hasta : ""}
+          wrapperClassName="min-w-0"
+          className="min-w-0"
+        />
 
         <div className="flex items-center gap-3 sm:col-span-2 lg:col-span-3 2xl:col-span-5">
           <button
